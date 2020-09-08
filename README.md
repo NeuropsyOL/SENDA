@@ -19,12 +19,15 @@ In order to start with development you need to follow these steps:
 
 - Clone this repository
 - Open project with Android Studio
+- update Gradle tools to newst version, then update and sync the project
 
 If you get errors related to native, built in functions such as fgetpos and fsetpos in cstdio, this problem arises beacuse of the version of the ndk that you are using. Follow this link https://developer.android.com/ndk/downloads/older_releases.html to download Revision 14b. Now to update the ndk in android studio go to File -> Project Structure -> SDK Location -> Android NDK location and set the path to point at android-ndk-r14b.
 
 #### Usage: 
 
 Install this application and start streaming data by clicking on Start LSL button. You can record this data on PC using Lab Recoder from https://github.com/sccn/labstreaminglayer/tree/master/Apps/LabRecorder. 
+
+In newer Android versions, it might be useful to prevent Android from saving battery power by limiting processing time for the app. Go to Settings -> Battery optimization and disable this feature for the app.
 
 ## Built With
 
@@ -33,11 +36,12 @@ Install this application and start streaming data by clicking on Start LSL butto
 
 ## Contributing
 
-Please feel free to contribute to this project by creating an issue first and then sending a pull respectively. 
+Please feel free to contribute to this project by creating an issue first and then sending a pull request respectively. 
 
 ## Authors
 
 * **Ali Ayub Khan** - [AliAyub007](https://github.com/AliAyub007)
+* **Sarah Blum**
 
 
 ## License
