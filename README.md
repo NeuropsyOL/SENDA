@@ -1,9 +1,11 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1419527.svg)](https://doi.org/10.5281/zenodo.1419527)
 ---
-# Project Title
+# SENDA Android Application to stream out Sensor Data directly from the Phone
 
-SENDA(Sensor Data Streamer) is an android application to stream real time sensor reading using LSL (Lab Streaming Layer). Along with the sensors it streams real time audio as well. Following sensors are included: 
+SENDA(Sensor Data Streamer) is an android application to stream real time sensor reading using LSL (Lab Streaming Layer). Along with the sensors it streams real time audio as well. This is a fork from the original author's Git [Ali Ayub Khan's SENDA](https://github.com/AliAyub007/SENDA), which contains additional features and support for Samsung phones.
 
+## Original Description of the App
+Following sensors are included: 
 - Accelerometer
 - Light
 - Proximity
@@ -40,9 +42,8 @@ Please feel free to contribute to this project by creating an issue first and th
 
 ## Authors
 
-* **Ali Ayub Khan** - [AliAyub007](https://github.com/AliAyub007)
 * **Sarah Blum**
-
+* **Ali Ayub Khan** - [AliAyub007](https://github.com/AliAyub007)
 
 ## License
 
