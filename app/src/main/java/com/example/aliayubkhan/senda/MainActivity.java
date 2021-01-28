@@ -17,9 +17,9 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.AppCompatCheckBox;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.appcompat.widget.AppCompatCheckBox;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -73,23 +73,17 @@ public class MainActivity extends Activity implements SensorEventListener
     @SuppressLint("StaticFieldLeak")
     static TextView streamingNow;
 
-
     int backButtonCount = 0;
 
     //Settings button
-
     ImageView settings_button;
 
     //Requesting run-time permissions
-
     //Create placeholder for user's consent to record_audio permission.
     //This will be used in handling callback
     private final int MY_PERMISSIONS_RECORD_AUDIO = 1;
 
     public static boolean audioPermission = true;
-
-    //
-
     public static List<Intent> POWERMANAGER_INTENTS = Arrays.asList(
             new Intent().setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")),
             new Intent().setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity")),
@@ -104,7 +98,6 @@ public class MainActivity extends Activity implements SensorEventListener
     );
 
     //Initializing Sensor data Variables
-
     static float ax,ay,az;
     static {
         ax = 0;
@@ -138,12 +131,9 @@ public class MainActivity extends Activity implements SensorEventListener
         rotVec_scalar = 0;
     }
 
-
     // Calibrated Step Counter Data (TYPE_STEP_COUNTER)!
     static float stepCounter;
-    static {   stepCounter = 0;
-
-    }
+    static {stepCounter = 0;}
 
     static float lightInt;
     static {
@@ -178,28 +168,22 @@ public class MainActivity extends Activity implements SensorEventListener
     /** Called when the activity is first created. */
     @SuppressLint("SetTextI18n")
     @Override
-    public void onCreate(Bundle savedInstanceState)
-    {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-//        tv = new TextView(this);
         setContentView(R.layout.activity_main);
         tv = (TextView)findViewById(R.id.tv);
         start = (Button)findViewById(R.id.startLSL);
         stop = (Button)findViewById(R.id.stopLSL);
         streamingNow = (TextView)findViewById(R.id.streamingNow);
         streamingNowBtn = (ImageView) findViewById(R.id.streamingNowBtn);
-        settings_button = (ImageView) findViewById(R.id.settings_btn);
-        settings_button.setVisibility(View.VISIBLE);
+        //settings_button = (ImageView) findViewById(R.id.settings_btn);
+        //settings_button.setVisibility(View.VISIBLE);
 
         requestAudioPermissions();
         startPowerSaverIntent(this);
-
         final Intent intent = new Intent(this, LSLService.class);
 
-
         start.setOnClickListener(new View.OnClickListener() {
-
             Long tsLong = System.currentTimeMillis()/1000;
             String ts = tsLong.toString();
 
@@ -209,15 +193,19 @@ public class MainActivity extends Activity implements SensorEventListener
                     if(!audioPermission){
                         requestAudioPermissions();
                     }
-                    if(samplingRate_set_Check){
-                        getSamplingRates();
+                    if(samplingRate_set_Check){ // this is set to false in every case, TODO delete this check
+                        getSamplingRates(); // we don't use user-set sampling rates now, but the sensor manager defaults
                     }
-                    startService(intent);
+                    // make this a foreground service so that android does not kill it while it is in the background
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        myStartForegroundService(intent);
+                    } else { // try our best with older Androids
+                        startService(intent);
+                    }
                 }
 
             }
         });
-
 
         stop.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -226,21 +214,17 @@ public class MainActivity extends Activity implements SensorEventListener
             }
         });
 
-        settings_button.setOnClickListener(new View.OnClickListener() {
+/*        settings_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
                 startActivity(intent);
             }
-        });
-
+        });*/
         tv.setText("Available Streams: ");
 
-
-        msensorManager=(SensorManager) getSystemService(SENSOR_SERVICE);
-
         //Setting All sensors
-
+        msensorManager=(SensorManager) getSystemService(SENSOR_SERVICE);
         assert msensorManager != null;
         mAccelerometer = msensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mLight = msensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
@@ -251,7 +235,6 @@ public class MainActivity extends Activity implements SensorEventListener
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT ) {
             mStepCounter = msensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         }
-
 
         //Registering listeners for Sensors
         msensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);//SensorManager.SENSOR_DELAY_FASTEST);
@@ -288,11 +271,14 @@ public class MainActivity extends Activity implements SensorEventListener
                     selectedItems.remove(selectedItem); //remove deselected item from the list of selected items
                 else
                     selectedItems.add(selectedItem); //add selected item to the list of selected items
-
-                getSelectedItems();
+                    getSelectedItems();
             }
-
         });
+    } // end onCreate
+
+    private void myStartForegroundService(Intent intent) {
+        intent.putExtra("inputExtra", "SENDA Foreground Service in Android");
+        ContextCompat.startForegroundService(this, intent);
     }
 
 
@@ -308,16 +294,13 @@ public class MainActivity extends Activity implements SensorEventListener
                 audioPermission = false;
 
                 //Give user option to still opt-in the permissions
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.RECORD_AUDIO},
-                        MY_PERMISSIONS_RECORD_AUDIO);
 
             } else {
                 // Show user dialog to grant permission to record audio
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.RECORD_AUDIO},
-                        MY_PERMISSIONS_RECORD_AUDIO);
             }
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    MY_PERMISSIONS_RECORD_AUDIO);
         }
     }
 
@@ -495,7 +478,6 @@ public class MainActivity extends Activity implements SensorEventListener
 
     public static void showText(String s){
         tv.setText(s);
-
     }
 }
 

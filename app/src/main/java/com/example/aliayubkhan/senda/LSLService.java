@@ -1,9 +1,13 @@
 package com.example.aliayubkhan.senda;
 
 import android.annotation.SuppressLint;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -16,6 +20,9 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.widget.Toast;
+
+import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
 
 import java.io.IOException;
 
@@ -106,8 +113,11 @@ public class LSLService extends Service {
             System.out.println("Value of acc is: " + SettingsActivity.accelerometer_sampling_rate_data);
             System.out.println("Value of audio is: " + SettingsActivity.audio_sampling_rate_data);
 
+            // this method is part of the mechanisms that allow this to be a foreground channel
+            createNotificationChannel();
+
             streamingNow.setVisibility(View.VISIBLE);
-            streamingNowBtn.setVisibility(View.VISIBLE);
+            streamingNowBtn.setVisibility(View.INVISIBLE);
 
             animation.setDuration(850);
             animation.setInterpolator(new LinearInterpolator()); // do not alter
@@ -116,7 +126,7 @@ public class LSLService extends Service {
             // infinitely
             animation.setRepeatMode(Animation.REVERSE); // Reverse animation at the
             // end so the button will fade back in
-            streamingNowBtn.startAnimation(animation);
+           // streamingNowBtn.startAnimation(animation);
             streamingNow.startAnimation(animation);
 
             Log.i(TAG, "Service onStartCommand");
@@ -283,7 +293,54 @@ public class LSLService extends Service {
             }).start();
 
         MainActivity.isRunning = true;
-        return START_STICKY;
+
+        // This service is killed by the OS if it is not started as background service
+        // This feature is only supported in Android 10 or higher
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startMyOwnForeground();
+            Toast.makeText(this, "SENDA can safely run in background!", Toast.LENGTH_LONG).show();
+        } else {
+            startForeground(1, new Notification());
+            Toast.makeText(this, "SENDA might be killed when in background!", Toast.LENGTH_LONG).show();
+        }
+        return START_NOT_STICKY;
+    }
+
+
+    // From https://stackoverflow.com/questions/47531742/startforeground-fail-after-upgrade-to-android-8-1
+    // and https://androidwave.com/foreground-service-android-example/
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void startMyOwnForeground() {
+        String NOTIFICATION_CHANNEL_ID = "com.example.aliayubkhan.senda";
+        String channelName = "SENDA Background Service";
+        NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
+        chan.setLightColor(Color.GREEN);
+        chan.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        assert manager != null;
+        manager.createNotificationChannel(chan);
+
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
+        Notification notification = notificationBuilder.setOngoing(true)
+                .setSmallIcon(R.mipmap.ic_launcher_round)
+                .setContentTitle("SENDA is running in background!")
+                .setPriority(NotificationManager.IMPORTANCE_DEFAULT)
+                .setCategory(Notification.CATEGORY_SERVICE)
+                .build();
+        int information_id = 35; // this must be unique and not 0, otherwise it does not have a meaning
+        startForeground(information_id, notification);
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    "FOREGROUNDCHANNELSENDA",
+                    "Foreground Service Channel SENDA",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(serviceChannel);
+        }
     }
 
     public static float[] floatMe(short[] pcms) {

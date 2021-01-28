@@ -1,33 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_lsldemo"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#f2f2f2"
-    android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
     tools:context="com.example.aliayubkhan.senda.MainActivity"
     tools:layout_editor_absoluteY="25dp">
+
+    <ImageView
+        android:id="@+id/streamingNowBtn"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="307dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="48dp"
+        android:layout_marginBottom="446dp"
+        android:src="@drawable/rec"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/linearHorizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <LinearLayout
+        android:id="@+id/linearVertical"
+        android:layout_width="315dp"
+        android:layout_height="433dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="27dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@+id/linearHorizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/streamingNowBtn"
+        app:layout_constraintVertical_bias="0.689">
+
+        <ListView
+            android:id="@+id/sensors"
+            android:layout_width="match_parent"
+            android:layout_height="504dp"
+            android:layout_marginTop="10dp"
+            android:dividerHeight="1dp" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        </ScrollView>
+
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/linearHorizontal"
         android:layout_width="0dp"
         android:layout_height="48dp"
-        android:layout_alignParentBottom="true"
         android:layout_alignParentTop="false"
+        android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="20dp"
-        android:layout_marginEnd="32dp"
         android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="20dp"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/settings_btn">
+        app:layout_constraintTop_toBottomOf="@id/streamingNowBtn">
 
         <Button
             android:id="@+id/startLSL"
@@ -51,86 +99,46 @@
             android:textColor="#f2f2f2" />
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/linearVertical"
-        android:layout_width="0dp"
-        android:layout_height="432dp"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="27dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginStart="32dp"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toTopOf="@+id/linearHorizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/streamingNowBtn">
-
-        <TextView
-            android:id="@+id/tv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="TextView"
-            android:textAlignment="center"
-            android:textColor="#595959"
-            android:textSize="25sp" />
-
-        <ListView
-            android:id="@+id/sensors"
-            android:layout_width="match_parent"
-            android:layout_height="372dp"
-            android:layout_marginTop="10dp"
-            android:dividerHeight="1dp" />
-
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-        </ScrollView>
-
-    </LinearLayout>
-
     <TextView
         android:id="@+id/streamingNow"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="452dp"
+        android:layout_marginBottom="492dp"
         android:text="Streaming Data"
         android:textSize="25sp"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/linearHorizontal"
         app:layout_constraintEnd_toStartOf="@+id/streamingNowBtn"
-        app:layout_constraintHorizontal_bias="0.489"
+        app:layout_constraintHorizontal_bias="0.268"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <ImageView
-        android:id="@+id/streamingNowBtn"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginBottom="446dp"
-        android:layout_marginEnd="80dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginTop="16dp"
-        android:src="@drawable/rec"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toTopOf="@+id/linearHorizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/settings_btn"
-        android:layout_width="25dp"
-        android:layout_height="25dp"
-        android:layout_marginBottom="457dp"
-        android:layout_marginRight="4dp"
-        android:layout_marginTop="16dp"
-        android:src="@drawable/ic_settings"
+    <TextView
+        android:id="@+id/tv"
+        android:layout_width="307dp"
+        android:layout_height="38dp"
+        android:layout_marginRight="36dp"
+        android:text="TextView"
+        android:textAlignment="center"
+        android:textColor="#595959"
+        android:textSize="25sp"
         app:layout_constraintBottom_toTopOf="@+id/linearHorizontal"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="VectorDrawableCompat" />
-</android.support.constraint.ConstraintLayout>
+        app:layout_constraintVertical_bias="0.028" />
+
+    <!--    <ImageView
+            android:id="@+id/settings_btn"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginBottom="457dp"
+            android:layout_marginRight="4dp"
+            android:layout_marginTop="16dp"
+            android:src="@drawable/ic_settings"
+            app:layout_constraintBottom_toTopOf="@+id/linearHorizontal"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="VectorDrawableCompat" />-->
+</androidx.constraintlayout.widget.ConstraintLayout>

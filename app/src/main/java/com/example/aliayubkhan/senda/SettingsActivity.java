@@ -3,7 +3,7 @@ package com.example.aliayubkhan.senda;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -34,7 +34,6 @@ public class SettingsActivity extends AppCompatActivity {
     static EditText audio_sampling_rate;
 
     //Variables to store sampling rates
-
     public static int accelerometer_sampling_rate_data = 12;
     public static int light_sampling_rate_data = 12;
     public static int proximity_sampling_rate_data = 12;
@@ -54,7 +53,7 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settings_activity);
 
-        samplingRate_set_Check = Boolean.TRUE;
+        samplingRate_set_Check = Boolean.FALSE;
         samplingSet = (Button) findViewById(R.id.samplingSetBtn);
 
         samplingSet.setOnClickListener(new View.OnClickListener() {
