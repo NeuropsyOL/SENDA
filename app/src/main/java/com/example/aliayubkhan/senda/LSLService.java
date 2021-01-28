@@ -23,9 +23,7 @@ import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
-
 import java.io.IOException;
-
 import static com.example.aliayubkhan.senda.MainActivity.isAccelerometer;
 import static com.example.aliayubkhan.senda.MainActivity.isAudio;
 import static com.example.aliayubkhan.senda.MainActivity.isGravity;
@@ -44,7 +42,6 @@ import static com.example.aliayubkhan.senda.SettingsActivity.proximity_sampling_
 import static com.example.aliayubkhan.senda.SettingsActivity.rotation_vector_sampling_rate_data;
 import static com.example.aliayubkhan.senda.SettingsActivity.step_count_sampling_rate_data;
 
-
 /**
  * Created by aliayubkhan on 19/04/2018.
  */
@@ -60,21 +57,28 @@ public class LSLService extends Service {
     private LSL.StreamInfo accelerometer, light, proximity, linearAcceleration, rotation, gravity, stepCount, audio = null;
 
     // the audio recording options
-    private static final int RECORDING_RATE = 8000;
+    private static final int RECORDING_RATE = audio_sampling_rate_data; // taken from settings
     private static final int CHANNEL = AudioFormat.CHANNEL_IN_MONO;
+    private int audio_channel_count = 1;
     private static final int FORMAT = AudioFormat.ENCODING_PCM_16BIT;
 
     // the audio recorder
     private AudioRecord recorder = null;
 
-    // the minimum buffer size needed for audio recording
-    private static int BUFFER_SIZE = AudioRecord.getMinBufferSize(
-            RECORDING_RATE, CHANNEL, FORMAT);
+    /**
+     * Factor by that the minimum buffer size is multiplied. The bigger the factor is the less
+     * likely it is that samples will be dropped, but more memory will be used. The minimum buffer
+     * size is determined by {@link AudioRecord#getMinBufferSize(int, int, int)} and depends on the
+     * recording settings.
+     */
+    private static final int BUFFER_SIZE_FACTOR = 2;
 
-    short[] buffer = new short[BUFFER_SIZE];
+    /**
+     * Size of the buffer where the audio data is stored by Android
+     */
+    private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(RECORDING_RATE, CHANNEL, FORMAT) * BUFFER_SIZE_FACTOR;
+    short[] audio_buffer = new short[BUFFER_SIZE];
 
-    // are we currently sending audio data
-    public static boolean currentlySendingAudio = false;
 
     public LSLService(){
         super();
@@ -205,23 +209,12 @@ public class LSLService extends Service {
                     }
 
                     if(isAudio){
-                        audio = new LSL.StreamInfo("Audio "+deviceName, "audio", 1, audio_sampling_rate_data, LSL.ChannelFormat.float32, "myuidaudio"+uniqueID);
+                        audio = new LSL.StreamInfo("Audio "+ deviceName, "audio", audio_channel_count, audio_sampling_rate_data, LSL.ChannelFormat.float32, "myuidaudio"+uniqueID);
                         try {
                             audioOutlet = new LSL.StreamOutlet(audio);
+                            recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, RECORDING_RATE, CHANNEL, FORMAT, BUFFER_SIZE);
                         } catch (IOException e) {
                             e.printStackTrace();
-                        }
-
-                        //For Audio
-                        try {
-                            recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
-                                    RECORDING_RATE, CHANNEL, FORMAT, BUFFER_SIZE * 10);
-
-                            recorder.startRecording();
-
-                            Log.d(TAG, "AudioRecord finished recording");
-                        } catch (Exception e) {
-                            Log.e(TAG, "Exception: " + e);
                         }
                     }
 
@@ -279,14 +272,11 @@ public class LSLService extends Service {
                         }
 
                         if(isAudio){
-                            recorder.read(buffer, 0, buffer.length);
-                            float[] pcmAsFloats = floatMe(buffer);
-                            audioOutlet.push_chunk(pcmAsFloats);
+                            recorder.startRecording();
+                            recorder.read(audio_buffer, 0, audio_buffer.length);
+                            audioOutlet.push_chunk(audio_buffer);
                         }
-
-
                     }
-
                     //Stop service once it finishes its task
                     stopSelf();
                 }
@@ -305,7 +295,6 @@ public class LSLService extends Service {
         }
         return START_NOT_STICKY;
     }
-
 
     // From https://stackoverflow.com/questions/47531742/startforeground-fail-after-upgrade-to-android-8-1
     // and https://androidwave.com/foreground-service-android-example/
@@ -414,8 +403,10 @@ public class LSLService extends Service {
 
             if (null != recorder) {
                 try{
+                    //my_stopRecording();
                     recorder.stop();
-                }catch(RuntimeException ex){
+                    recorder.release();
+                } catch(RuntimeException ex){
                     recorder.release();
                 }
             }

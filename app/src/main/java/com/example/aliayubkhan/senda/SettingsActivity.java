@@ -41,7 +41,7 @@ public class SettingsActivity extends AppCompatActivity {
     public static int linear_acceleration_sampling_rate_data = 12;
     public static int rotation_vector_sampling_rate_data = 12;
     public static int step_count_sampling_rate_data = 12;
-    public static int audio_sampling_rate_data = 8000;
+    public static int audio_sampling_rate_data = 44100;
 
     public static Boolean samplingRate_set_Check = Boolean.FALSE;
 
