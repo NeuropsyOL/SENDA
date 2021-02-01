@@ -58,8 +58,8 @@ public class LSLService extends Service {
 
     // the audio recording options
     private static final int RECORDING_RATE = audio_sampling_rate_data; // taken from settings
-    private static final int CHANNEL = AudioFormat.CHANNEL_IN_MONO;
-    private int audio_channel_count = 1;
+    private static final int CHANNEL = AudioFormat.CHANNEL_IN_STEREO;
+    private int audio_channel_count = 2;
     private static final int FORMAT = AudioFormat.ENCODING_PCM_16BIT;
 
     // the audio recorder

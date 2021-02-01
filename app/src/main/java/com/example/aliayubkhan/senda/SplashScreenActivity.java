@@ -14,14 +14,14 @@ public class SplashScreenActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_splash_screen);
+        //setContentView(R.layout.activity_splash_screen);
 
 
         /* SPLASH SCREEN TIMER */
         Thread timer = new Thread(){
             public void run(){
                 try{
-                    sleep(3000);
+                    sleep(0);
                 }
                 catch(InterruptedException e){
                     e.printStackTrace();
