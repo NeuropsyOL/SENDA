@@ -253,6 +253,7 @@ public class MainActivity extends Activity implements SensorEventListener
         adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_view_text, R.id.streamsSelected, SensorName);
         lv.setAdapter(adapter);
 
+        //TODO check whether sensors are even available with given hardware
         SensorName.add("Accelerometer");
         SensorName.add("Light");
         SensorName.add("Proximity");
