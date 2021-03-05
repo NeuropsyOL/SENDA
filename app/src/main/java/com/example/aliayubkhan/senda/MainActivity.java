@@ -4,10 +4,12 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -20,6 +22,11 @@ import android.os.Bundle;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.widget.AppCompatCheckBox;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.test.espresso.IdlingRegistry;
+import androidx.test.espresso.IdlingResource;
+
+import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -165,6 +172,8 @@ public class MainActivity extends Activity implements SensorEventListener
         georotVec_z      = 0;
     }
 
+    public static int SENSOR_COUNT;
+
     /** Called when the activity is first created. */
     @SuppressLint("SetTextI18n")
     @Override
@@ -237,12 +246,12 @@ public class MainActivity extends Activity implements SensorEventListener
         }
 
         //Registering listeners for Sensors
-        msensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);//SensorManager.SENSOR_DELAY_FASTEST);
-        msensorManager.registerListener(this, mLight, SensorManager.SENSOR_DELAY_NORMAL);
-        msensorManager.registerListener(this, mProximity, SensorManager.SENSOR_DELAY_NORMAL);
-        msensorManager.registerListener(this, mGravity, SensorManager.SENSOR_DELAY_NORMAL);
-        msensorManager.registerListener(this, mLinearAcceleration, SensorManager.SENSOR_DELAY_NORMAL);
-        msensorManager.registerListener(this, mRotation, SensorManager.SENSOR_DELAY_NORMAL);
+        msensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_UI);//SensorManager.SENSOR_DELAY_FASTEST);
+        msensorManager.registerListener(this, mLight, SensorManager.SENSOR_DELAY_UI);
+        msensorManager.registerListener(this, mProximity, SensorManager.SENSOR_DELAY_UI);
+        msensorManager.registerListener(this, mGravity, SensorManager.SENSOR_DELAY_UI);
+        msensorManager.registerListener(this, mLinearAcceleration, SensorManager.SENSOR_DELAY_UI);
+        msensorManager.registerListener(this, mRotation, SensorManager.SENSOR_DELAY_UI);
         msensorManager.registerListener(this, mStepCounter, SensorManager.SENSOR_DELAY_UI);
 
         lv = (ListView) findViewById (R.id.sensors);
@@ -263,6 +272,7 @@ public class MainActivity extends Activity implements SensorEventListener
         SensorName.add("Step Count");
         SensorName.add("Audio");
 
+        SENSOR_COUNT = lv.getAdapter().getCount();
 
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener(){
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -276,6 +286,8 @@ public class MainActivity extends Activity implements SensorEventListener
             }
         });
     } // end onCreate
+    
+    
 
     private void myStartForegroundService(Intent intent) {
         intent.putExtra("inputExtra", "SENDA Foreground Service in Android");
@@ -430,11 +442,12 @@ public class MainActivity extends Activity implements SensorEventListener
     public void onSensorChanged(SensorEvent event) {
 
         Sensor sensor = event.sensor;
-
         if (sensor.getType()==Sensor.TYPE_ACCELEROMETER){
             ax=event.values[0];
             ay=event.values[1];
             az=event.values[2];
+            // inform LSL Service whenever we have a new value
+
 
             //System.out.print("\nAccelerometer = "+ ax + " /" + ay + " /" + az+ " /\n");
         } else if (sensor.getType() == Sensor.TYPE_LIGHT){
@@ -474,7 +487,8 @@ public class MainActivity extends Activity implements SensorEventListener
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
+        // Toast.makeText(this, "The Sampling Rate of the Sensors has changed!", Toast.LENGTH_SHORT).show();
+        // this toast does not disappear anymore, the sampling rate keeps changing all the time (which is expected).
     }
 
     public static void showText(String s){

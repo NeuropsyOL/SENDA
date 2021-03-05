@@ -5,8 +5,10 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -23,6 +25,8 @@ import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import java.io.IOException;
 import static com.example.aliayubkhan.senda.MainActivity.isAccelerometer;
 import static com.example.aliayubkhan.senda.MainActivity.isAudio;
@@ -109,6 +113,7 @@ public class LSLService extends Service {
         assert pm != null;
         wakelock= pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getClass().getCanonicalName());
         wakelock.acquire();
+
     }
 
     @Override
@@ -180,7 +185,7 @@ public class LSLService extends Service {
                     }
 
                     if(isRotation){
-                        rotation = new LSL.StreamInfo("Rotation "+deviceName, "marker", 4, rotation_vector_sampling_rate_data, LSL.ChannelFormat.float32, "myuidrotation"+uniqueID);
+                        rotation = new LSL.StreamInfo("Rotation "+deviceName, "marker", 3, rotation_vector_sampling_rate_data, LSL.ChannelFormat.float32, "myuidrotation"+uniqueID);
                         try {
                             rotationOutlet = new LSL.StreamOutlet(rotation);
                         } catch (IOException e) {
@@ -218,8 +223,13 @@ public class LSLService extends Service {
                         }
                     }
 
+                    //TODO this could be a user-defined value
                     while (!MainActivity.checkFlag) {
-
+                        try {
+                            Thread.sleep(100); // sr = 100 hz
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         if(isAccelerometer){
                             //Setting Accelerometer Data
                             accelerometerData[0] = MainActivity.ax;
@@ -271,16 +281,32 @@ public class LSLService extends Service {
                             stepCountOutlet.push_sample(stepCountData);
                         }
 
-                        if(isAudio){
-                            recorder.startRecording();
-                            recorder.read(audio_buffer, 0, audio_buffer.length);
-                            audioOutlet.push_chunk(audio_buffer);
-                        }
+//                        if(isAudio){
+//                            recorder.startRecording();
+//                            recorder.read(audio_buffer, 0, audio_buffer.length);
+//                            audioOutlet.push_chunk(audio_buffer);
+//                        }
                     }
                     //Stop service once it finishes its task
                     stopSelf();
                 }
             }).start();
+
+        // Audio gets its own thread without pauses
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (!MainActivity.checkFlag) {
+                    if(isAudio){
+                        recorder.startRecording();
+                        recorder.read(audio_buffer, 0, audio_buffer.length);
+                        audioOutlet.push_chunk(audio_buffer);
+                    }
+                }
+                stopSelf();
+            }
+        }).start();
+
 
         MainActivity.isRunning = true;
 
