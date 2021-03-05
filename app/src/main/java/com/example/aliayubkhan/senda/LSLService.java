@@ -213,16 +213,6 @@ public class LSLService extends Service {
                         }
                     }
 
-                    if(isAudio){
-                        audio = new LSL.StreamInfo("Audio "+ deviceName, "audio", audio_channel_count, audio_sampling_rate_data, LSL.ChannelFormat.float32, "myuidaudio"+uniqueID);
-                        try {
-                            audioOutlet = new LSL.StreamOutlet(audio);
-                            recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, RECORDING_RATE, CHANNEL, FORMAT, BUFFER_SIZE);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
                     //TODO this could be a user-defined value
                     while (!MainActivity.checkFlag) {
                         try {
@@ -296,6 +286,16 @@ public class LSLService extends Service {
         new Thread(new Runnable() {
             @Override
             public void run() {
+
+                if(isAudio){
+                    audio = new LSL.StreamInfo("Audio "+ deviceName, "audio", audio_channel_count, audio_sampling_rate_data, LSL.ChannelFormat.float32, "myuidaudio"+uniqueID);
+                    try {
+                        audioOutlet = new LSL.StreamOutlet(audio);
+                        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, RECORDING_RATE, CHANNEL, FORMAT, BUFFER_SIZE);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
                 while (!MainActivity.checkFlag) {
                     if(isAudio){
                         recorder.startRecording();
