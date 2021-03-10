@@ -34,14 +34,14 @@ public class SettingsActivity extends AppCompatActivity {
     static EditText audio_sampling_rate;
 
     //Variables to store sampling rates
-    public static int accelerometer_sampling_rate_data = 12;
-    public static int light_sampling_rate_data = 12;
-    public static int proximity_sampling_rate_data = 12;
-    public static int gravity_sampling_rate_data = 12;
-    public static int linear_acceleration_sampling_rate_data = 12;
-    public static int rotation_vector_sampling_rate_data = 12;
-    public static int step_count_sampling_rate_data = 12;
-    public static int audio_sampling_rate_data = 44100;
+    static int accelerometer_sampling_rate_data = 12;
+    static int light_sampling_rate_data = 12;
+    static int proximity_sampling_rate_data = 12;
+    static int gravity_sampling_rate_data = 12;
+    static int linear_acceleration_sampling_rate_data = 12;
+    static int rotation_vector_sampling_rate_data = 12;
+    static int step_count_sampling_rate_data = 12;
+    static int audio_sampling_rate_data = 44100;
 
     public static Boolean samplingRate_set_Check = Boolean.FALSE;
 

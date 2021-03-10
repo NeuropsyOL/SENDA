@@ -38,13 +38,6 @@ import static com.example.aliayubkhan.senda.MainActivity.isRotation;
 import static com.example.aliayubkhan.senda.MainActivity.isStepCounter;
 import static com.example.aliayubkhan.senda.MainActivity.streamingNow;
 import static com.example.aliayubkhan.senda.MainActivity.streamingNowBtn;
-import static com.example.aliayubkhan.senda.SettingsActivity.audio_sampling_rate_data;
-import static com.example.aliayubkhan.senda.SettingsActivity.gravity_sampling_rate_data;
-import static com.example.aliayubkhan.senda.SettingsActivity.light_sampling_rate_data;
-import static com.example.aliayubkhan.senda.SettingsActivity.linear_acceleration_sampling_rate_data;
-import static com.example.aliayubkhan.senda.SettingsActivity.proximity_sampling_rate_data;
-import static com.example.aliayubkhan.senda.SettingsActivity.rotation_vector_sampling_rate_data;
-import static com.example.aliayubkhan.senda.SettingsActivity.step_count_sampling_rate_data;
 
 /**
  * Created by aliayubkhan on 19/04/2018.
@@ -60,13 +53,18 @@ public class LSLService extends Service {
     //LSL Streams
     private LSL.StreamInfo accelerometer, light, proximity, linearAcceleration, rotation, gravity, stepCount, audio = null;
 
-    // the audio recording options
-    private static final int RECORDING_RATE = audio_sampling_rate_data; // taken from settings
+    // sensor sampling options
+    private static final int AUDIO_RECORDING_RATE = 44100;
+
+    // the pull-values thread sleeps for this amount of ms in every iteration before pulling new sensor values from MainActivity and pushing them
+    private static final int THREAD_INTERVAL = 10;
+    // the sampling rate of every stream depends on the thread sleep interval, not the OS
+    private static final int SAMPLING_RATE = 1000 / THREAD_INTERVAL; // how many values do we receive per ms
+
+    // audio settings
     private static final int CHANNEL = AudioFormat.CHANNEL_IN_STEREO;
     private int audio_channel_count = 2;
     private static final int FORMAT = AudioFormat.ENCODING_PCM_16BIT;
-
-    // the audio recorder
     private AudioRecord recorder = null;
 
     /**
@@ -80,7 +78,7 @@ public class LSLService extends Service {
     /**
      * Size of the buffer where the audio data is stored by Android
      */
-    private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(RECORDING_RATE, CHANNEL, FORMAT) * BUFFER_SIZE_FACTOR;
+    private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(AUDIO_RECORDING_RATE, CHANNEL, FORMAT) * BUFFER_SIZE_FACTOR;
     short[] audio_buffer = new short[BUFFER_SIZE];
 
 
@@ -148,7 +146,7 @@ public class LSLService extends Service {
                 public void run() {
 
                     if(isAccelerometer){
-                        accelerometer = new LSL.StreamInfo("Accelerometer "+deviceName, "marker", 3, SettingsActivity.accelerometer_sampling_rate_data, LSL.ChannelFormat.float32, "myuidaccelerometer"+uniqueID);
+                        accelerometer = new LSL.StreamInfo("Accelerometer "+ deviceName, "eeg", 3, SettingsActivity.accelerometer_sampling_rate_data, LSL.ChannelFormat.float32, "myuidaccelerometer"+uniqueID);
                         try {
                             accelerometerOutlet = new LSL.StreamOutlet(accelerometer);
                         } catch (IOException e) {
@@ -157,7 +155,7 @@ public class LSLService extends Service {
                     }
 
                     if(isLight){
-                        light = new LSL.StreamInfo("Light "+deviceName, "marker", 1, light_sampling_rate_data, LSL.ChannelFormat.float32, "myuidlight"+uniqueID);
+                        light = new LSL.StreamInfo("Light "+ deviceName, "eeg", 1, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidlight"+uniqueID);
                         try {
                             lightOutlet = new LSL.StreamOutlet(light);
                         } catch (IOException e) {
@@ -166,7 +164,7 @@ public class LSLService extends Service {
                     }
 
                     if(isProximity){
-                        proximity = new LSL.StreamInfo("Proximity "+deviceName, "marker", 1,proximity_sampling_rate_data, LSL.ChannelFormat.float32, "myuidproximity"+uniqueID);
+                        proximity = new LSL.StreamInfo("Proximity "+ deviceName, "eeg", 1,SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidproximity"+uniqueID);
                         try {
                             proximityOutlet = new LSL.StreamOutlet(proximity);
                         } catch (IOException e) {
@@ -175,7 +173,7 @@ public class LSLService extends Service {
                     }
 
                     if(isLinearAcceleration){
-                        linearAcceleration = new LSL.StreamInfo("LinearAcceleration "+deviceName, "marker", 3,linear_acceleration_sampling_rate_data, LSL.ChannelFormat.float32, "myuidlinearacceleration"+uniqueID);
+                        linearAcceleration = new LSL.StreamInfo("LinearAcceleration "+ deviceName, "eeg", 3,SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidlinearacceleration"+uniqueID);
                         try {
                             linearAccelerationOutlet = new LSL.StreamOutlet(linearAcceleration);
                         } catch (IOException e) {
@@ -185,7 +183,7 @@ public class LSLService extends Service {
                     }
 
                     if(isRotation){
-                        rotation = new LSL.StreamInfo("Rotation "+deviceName, "marker", 3, rotation_vector_sampling_rate_data, LSL.ChannelFormat.float32, "myuidrotation"+uniqueID);
+                        rotation = new LSL.StreamInfo("Rotation "+ deviceName, "eeg", 3, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidrotation"+uniqueID);
                         try {
                             rotationOutlet = new LSL.StreamOutlet(rotation);
                         } catch (IOException e) {
@@ -195,7 +193,7 @@ public class LSLService extends Service {
                     }
 
                     if(isGravity){
-                        gravity = new LSL.StreamInfo("Gravity "+deviceName, "marker", 3, gravity_sampling_rate_data, LSL.ChannelFormat.float32, "myuidgravity"+uniqueID);
+                        gravity = new LSL.StreamInfo("Gravity "+ deviceName, "eeg", 3, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidgravity"+uniqueID);
                         try {
                             gravityOutlet = new LSL.StreamOutlet(gravity);
                         } catch (IOException e) {
@@ -205,7 +203,7 @@ public class LSLService extends Service {
                     }
 
                     if(isStepCounter){
-                        stepCount = new LSL.StreamInfo("StepCount "+deviceName, "marker", 1, step_count_sampling_rate_data, LSL.ChannelFormat.float32, "myuidstep"+uniqueID);
+                        stepCount = new LSL.StreamInfo("StepCount "+ deviceName, "marker", 1, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidstep"+uniqueID);
                         try {
                             stepCountOutlet = new LSL.StreamOutlet(stepCount);
                         } catch (IOException e) {
@@ -214,9 +212,10 @@ public class LSLService extends Service {
                     }
 
                     //TODO this could be a user-defined value
+                    //java.util.concurrent.Executors.newScheduledThreadPool(coreCount).scheduleAtFixedRate(command, initialDelay, period, unit)
                     while (!MainActivity.checkFlag) {
                         try {
-                            Thread.sleep(100); // sr = 100 hz
+                            Thread.sleep(THREAD_INTERVAL); // sr = 100 hz
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -288,10 +287,10 @@ public class LSLService extends Service {
             public void run() {
 
                 if(isAudio){
-                    audio = new LSL.StreamInfo("Audio "+ deviceName, "audio", audio_channel_count, audio_sampling_rate_data, LSL.ChannelFormat.float32, "myuidaudio"+uniqueID);
+                    audio = new LSL.StreamInfo("Audio "+ deviceName, "audio", audio_channel_count, AUDIO_RECORDING_RATE, LSL.ChannelFormat.float32, "myuidaudio"+uniqueID);
                     try {
                         audioOutlet = new LSL.StreamOutlet(audio);
-                        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, RECORDING_RATE, CHANNEL, FORMAT, BUFFER_SIZE);
+                        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, AUDIO_RECORDING_RATE, CHANNEL, FORMAT, BUFFER_SIZE);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -356,14 +355,6 @@ public class LSLService extends Service {
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(serviceChannel);
         }
-    }
-
-    public static float[] floatMe(short[] pcms) {
-        float[] floaters = new float[pcms.length];
-        for (int i = 0; i < pcms.length; i++) {
-            floaters[i] = pcms[i];
-        }
-        return floaters;
     }
 
     @Override
