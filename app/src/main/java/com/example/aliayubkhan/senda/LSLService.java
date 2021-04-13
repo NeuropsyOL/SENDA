@@ -117,9 +117,6 @@ public class LSLService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-            System.out.println("Value of acc is: " + SettingsActivity.accelerometer_sampling_rate_data);
-            System.out.println("Value of audio is: " + SettingsActivity.audio_sampling_rate_data);
-
             // this method is part of the mechanisms that allow this to be a foreground channel
             createNotificationChannel();
 
@@ -139,14 +136,15 @@ public class LSLService extends Service {
             Log.i(TAG, "Service onStartCommand");
             Toast.makeText(this,"Starting LSL!", Toast.LENGTH_SHORT).show();
 
-            //Creating new thread for my service
-            //Always write your long running tasks in a separate thread, to avoid ANR
+            // Create outlets for all streams
             new Thread(new Runnable() {
+                private double [][] all_acc;
+
                 @Override
                 public void run() {
 
                     if(isAccelerometer){
-                        accelerometer = new LSL.StreamInfo("Accelerometer "+ deviceName, "eeg", 3, SettingsActivity.accelerometer_sampling_rate_data, LSL.ChannelFormat.float32, "myuidaccelerometer"+uniqueID);
+                        accelerometer = new LSL.StreamInfo("Accelerometer "+ deviceName, "eeg", 3, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidaccelerometer"+uniqueID);
                         try {
                             accelerometerOutlet = new LSL.StreamOutlet(accelerometer);
                         } catch (IOException e) {
@@ -203,7 +201,7 @@ public class LSLService extends Service {
                     }
 
                     if(isStepCounter){
-                        stepCount = new LSL.StreamInfo("StepCount "+ deviceName, "marker", 1, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidstep"+uniqueID);
+                        stepCount = new LSL.StreamInfo("StepCount "+ deviceName, "eeg", 1, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidstep"+uniqueID);
                         try {
                             stepCountOutlet = new LSL.StreamOutlet(stepCount);
                         } catch (IOException e) {
@@ -211,11 +209,10 @@ public class LSLService extends Service {
                         }
                     }
 
-                    //TODO this could be a user-defined value
-                    //java.util.concurrent.Executors.newScheduledThreadPool(coreCount).scheduleAtFixedRate(command, initialDelay, period, unit)
+                    // push samples while activity is running
                     while (!MainActivity.checkFlag) {
                         try {
-                            Thread.sleep(THREAD_INTERVAL); // sr = 100 hz
+                            Thread.sleep(THREAD_INTERVAL);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -224,7 +221,7 @@ public class LSLService extends Service {
                             accelerometerData[0] = MainActivity.ax;
                             accelerometerData[1] = MainActivity.ay;
                             accelerometerData[2] = MainActivity.az;
-                            accelerometerOutlet.push_sample(accelerometerData);
+                           accelerometerOutlet.push_sample(accelerometerData);
                         }
 
                         if(isLight){
@@ -269,12 +266,6 @@ public class LSLService extends Service {
                             stepCountData[0] = MainActivity.stepCounter;
                             stepCountOutlet.push_sample(stepCountData);
                         }
-
-//                        if(isAudio){
-//                            recorder.startRecording();
-//                            recorder.read(audio_buffer, 0, audio_buffer.length);
-//                            audioOutlet.push_chunk(audio_buffer);
-//                        }
                     }
                     //Stop service once it finishes its task
                     stopSelf();

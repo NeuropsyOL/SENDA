@@ -447,8 +447,6 @@ public class MainActivity extends Activity implements SensorEventListener
             ay=event.values[1];
             az=event.values[2];
             // inform LSL Service whenever we have a new value
-
-
             //System.out.print("\nAccelerometer = "+ ax + " /" + ay + " /" + az+ " /\n");
         } else if (sensor.getType() == Sensor.TYPE_LIGHT){
             lightInt= event.values[0];
