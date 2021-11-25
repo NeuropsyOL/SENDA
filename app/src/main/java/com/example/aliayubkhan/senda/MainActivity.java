@@ -4,12 +4,10 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -19,14 +17,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.appcompat.widget.AppCompatCheckBox;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.test.espresso.IdlingRegistry;
-import androidx.test.espresso.IdlingResource;
-
-import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -36,6 +26,10 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.widget.AppCompatCheckBox;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,9 +56,7 @@ public class MainActivity extends Activity implements SensorEventListener
 
     //Sensor Names
     Sensor mAccelerometer, mLight, mProximity, mGravity, mLinearAcceleration, mRotation, mStepCounter;
-
     //Sensors Checklist
-
     static Boolean isAccelerometer = false;
     static Boolean isLight = false;
     static Boolean isProximity = false;
@@ -173,6 +165,9 @@ public class MainActivity extends Activity implements SensorEventListener
     }
 
     public static int SENSOR_COUNT;
+
+    public MainActivity() {
+    }
 
     /** Called when the activity is first created. */
     @SuppressLint("SetTextI18n")

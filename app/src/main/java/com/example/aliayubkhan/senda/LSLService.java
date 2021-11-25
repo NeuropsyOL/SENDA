@@ -28,6 +28,10 @@ import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.Random;
+import java.util.UUID;
+
 import static com.example.aliayubkhan.senda.MainActivity.isAccelerometer;
 import static com.example.aliayubkhan.senda.MainActivity.isAudio;
 import static com.example.aliayubkhan.senda.MainActivity.isGravity;
@@ -57,7 +61,7 @@ public class LSLService extends Service {
     private static final int AUDIO_RECORDING_RATE = 44100;
 
     // the pull-values thread sleeps for this amount of ms in every iteration before pulling new sensor values from MainActivity and pushing them
-    private static final int THREAD_INTERVAL = 10;
+    private static final int THREAD_INTERVAL = 8;
     // the sampling rate of every stream depends on the thread sleep interval, not the OS
     private static final int SAMPLING_RATE = 1000 / THREAD_INTERVAL; // how many values do we receive per ms
 
@@ -89,6 +93,7 @@ public class LSLService extends Service {
     String uniqueID = Build.FINGERPRINT;
     String deviceName = Build.MODEL;
 
+
     // Data Variables
     float[] accelerometerData = new float[3];
     float[] linearAccelerationData = new float[3];
@@ -111,7 +116,6 @@ public class LSLService extends Service {
         assert pm != null;
         wakelock= pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getClass().getCanonicalName());
         wakelock.acquire();
-
     }
 
     @Override
@@ -144,7 +148,8 @@ public class LSLService extends Service {
                 public void run() {
 
                     if(isAccelerometer){
-                        accelerometer = new LSL.StreamInfo("Accelerometer "+ deviceName, "eeg", 3, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidaccelerometer"+uniqueID);
+                        accelerometer = new LSL.StreamInfo("Accelerometer "+ deviceName + generate_random_String(),
+                                "eeg", 3, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidaccelerometer"+uniqueID);
                         try {
                             accelerometerOutlet = new LSL.StreamOutlet(accelerometer);
                         } catch (IOException e) {
@@ -153,7 +158,8 @@ public class LSLService extends Service {
                     }
 
                     if(isLight){
-                        light = new LSL.StreamInfo("Light "+ deviceName, "eeg", 1, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidlight"+uniqueID);
+                        light = new LSL.StreamInfo("Light "+ deviceName+ generate_random_String(),
+                                "eeg", 1, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidlight"+uniqueID);
                         try {
                             lightOutlet = new LSL.StreamOutlet(light);
                         } catch (IOException e) {
@@ -162,7 +168,8 @@ public class LSLService extends Service {
                     }
 
                     if(isProximity){
-                        proximity = new LSL.StreamInfo("Proximity "+ deviceName, "eeg", 1,SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidproximity"+uniqueID);
+                        proximity = new LSL.StreamInfo("Proximity "+ deviceName + generate_random_String(),
+                                "eeg", 1,SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidproximity"+uniqueID);
                         try {
                             proximityOutlet = new LSL.StreamOutlet(proximity);
                         } catch (IOException e) {
@@ -171,7 +178,8 @@ public class LSLService extends Service {
                     }
 
                     if(isLinearAcceleration){
-                        linearAcceleration = new LSL.StreamInfo("LinearAcceleration "+ deviceName, "eeg", 3,SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidlinearacceleration"+uniqueID);
+                        linearAcceleration = new LSL.StreamInfo("LinearAcceleration "+ deviceName + generate_random_String(),
+                                "eeg", 3,SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidlinearacceleration"+uniqueID);
                         try {
                             linearAccelerationOutlet = new LSL.StreamOutlet(linearAcceleration);
                         } catch (IOException e) {
@@ -181,7 +189,8 @@ public class LSLService extends Service {
                     }
 
                     if(isRotation){
-                        rotation = new LSL.StreamInfo("Rotation "+ deviceName, "eeg", 3, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidrotation"+uniqueID);
+                        rotation = new LSL.StreamInfo("Rotation "+ deviceName + generate_random_String(),
+                                "eeg", 3, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidrotation"+uniqueID);
                         try {
                             rotationOutlet = new LSL.StreamOutlet(rotation);
                         } catch (IOException e) {
@@ -191,7 +200,8 @@ public class LSLService extends Service {
                     }
 
                     if(isGravity){
-                        gravity = new LSL.StreamInfo("Gravity "+ deviceName, "eeg", 3, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidgravity"+uniqueID);
+                        gravity = new LSL.StreamInfo("Gravity "+ deviceName + generate_random_String(),
+                                "eeg", 3, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidgravity"+uniqueID);
                         try {
                             gravityOutlet = new LSL.StreamOutlet(gravity);
                         } catch (IOException e) {
@@ -201,7 +211,8 @@ public class LSLService extends Service {
                     }
 
                     if(isStepCounter){
-                        stepCount = new LSL.StreamInfo("StepCount "+ deviceName, "eeg", 1, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidstep"+uniqueID);
+                        stepCount = new LSL.StreamInfo("StepCount " + deviceName + generate_random_String(),
+                                "eeg", 1, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidstep"+uniqueID);
                         try {
                             stepCountOutlet = new LSL.StreamOutlet(stepCount);
                         } catch (IOException e) {
@@ -278,7 +289,8 @@ public class LSLService extends Service {
             public void run() {
 
                 if(isAudio){
-                    audio = new LSL.StreamInfo("Audio "+ deviceName, "audio", audio_channel_count, AUDIO_RECORDING_RATE, LSL.ChannelFormat.float32, "myuidaudio"+uniqueID);
+                    audio = new LSL.StreamInfo("Audio "+ deviceName + generate_random_String(),
+                            "audio", audio_channel_count, AUDIO_RECORDING_RATE, LSL.ChannelFormat.float32, "myuidaudio"+uniqueID);
                     try {
                         audioOutlet = new LSL.StreamOutlet(audio);
                         recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, AUDIO_RECORDING_RATE, CHANNEL, FORMAT, BUFFER_SIZE);
@@ -346,6 +358,25 @@ public class LSLService extends Service {
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(serviceChannel);
         }
+
+
+    }
+
+    public String generate_random_String() {
+
+        int leftLimit = 97; // letter 'a'
+        int rightLimit = 122; // letter 'z'
+        int targetStringLength = 10;
+        Random random = new Random();
+        StringBuilder buffer = new StringBuilder(targetStringLength);
+        for (int i = 0; i < targetStringLength; i++) {
+            int randomLimitedInt = leftLimit + (int)
+                    (random.nextFloat() * (rightLimit - leftLimit + 1));
+            buffer.append((char) randomLimitedInt);
+        }
+        String generatedString = buffer.toString();
+
+        return(generatedString);
     }
 
     @Override
