@@ -375,8 +375,7 @@ public class LSLService extends Service {
             buffer.append((char) randomLimitedInt);
         }
         String generatedString = buffer.toString();
-
-        return(generatedString);
+        return generatedString;
     }
 
     @Override
