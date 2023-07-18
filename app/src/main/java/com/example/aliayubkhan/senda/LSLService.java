@@ -5,11 +5,11 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -25,23 +25,23 @@ import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Random;
-import java.util.UUID;
+import java.util.Vector;
 
-import static com.example.aliayubkhan.senda.MainActivity.isAccelerometer;
+import static com.example.aliayubkhan.senda.MainActivity.streamingNow;
+import static com.example.aliayubkhan.senda.MainActivity.streamingNowBtn;
 import static com.example.aliayubkhan.senda.MainActivity.isAudio;
+import static com.example.aliayubkhan.senda.MainActivity.isLocation;
+import static com.example.aliayubkhan.senda.MainActivity.isAccelerometer;
 import static com.example.aliayubkhan.senda.MainActivity.isGravity;
 import static com.example.aliayubkhan.senda.MainActivity.isLight;
 import static com.example.aliayubkhan.senda.MainActivity.isLinearAcceleration;
+import static com.example.aliayubkhan.senda.MainActivity.isStepCounter;
 import static com.example.aliayubkhan.senda.MainActivity.isProximity;
 import static com.example.aliayubkhan.senda.MainActivity.isRotation;
-import static com.example.aliayubkhan.senda.MainActivity.isStepCounter;
-import static com.example.aliayubkhan.senda.MainActivity.streamingNow;
-import static com.example.aliayubkhan.senda.MainActivity.streamingNowBtn;
+
 
 /**
  * Created by aliayubkhan on 19/04/2018.
@@ -52,10 +52,10 @@ public class LSLService extends Service {
     private static final String TAG = "LSLService";
 
     //LSL Outlets
-    static LSL.StreamOutlet accelerometerOutlet, lightOutlet, proximityOutlet, linearAccelerationOutlet, rotationOutlet, gravityOutlet, stepCountOutlet, audioOutlet = null;
+    static LSL.StreamOutlet audioOutlet, locationOutlet = null;
 
     //LSL Streams
-    private LSL.StreamInfo accelerometer, light, proximity, linearAcceleration, rotation, gravity, stepCount, audio = null;
+    private LSL.StreamInfo audio, location = null;
 
     // sensor sampling options
     private static final int AUDIO_RECORDING_RATE = 44100;
@@ -85,8 +85,9 @@ public class LSLService extends Service {
     private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(AUDIO_RECORDING_RATE, CHANNEL, FORMAT) * BUFFER_SIZE_FACTOR;
     short[] audio_buffer = new short[BUFFER_SIZE];
 
+    private Vector<SensorBridge> sensorBridges = new Vector<>();
 
-    public LSLService(){
+    public LSLService() {
         super();
     }
 
@@ -95,13 +96,7 @@ public class LSLService extends Service {
 
 
     // Data Variables
-    float[] accelerometerData = new float[3];
-    float[] linearAccelerationData = new float[3];
-    float[] gravityData = new float[3];
-    float[] rotationData = new float[4];
-    float[] lightData = new float[1];
-    float[] proximityData = new float[1];
-    float[] stepCountData = new float[1];
+    double[] locationData = new double[2];
 
     //Wake Lock
     PowerManager.WakeLock wakelock;
@@ -114,183 +109,102 @@ public class LSLService extends Service {
     public void onCreate() {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         assert pm != null;
-        wakelock= pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getClass().getCanonicalName());
+        wakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getClass().getCanonicalName());
         wakelock.acquire();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-            // this method is part of the mechanisms that allow this to be a foreground channel
-            createNotificationChannel();
+        // this method is part of the mechanisms that allow this to be a foreground channel
+        createNotificationChannel();
 
-            streamingNow.setVisibility(View.VISIBLE);
-            streamingNowBtn.setVisibility(View.INVISIBLE);
+        if (streamingNow == null) {
+            throw new AssertionError("StreamingNow is Null");
+        }
+        streamingNow.setVisibility(View.VISIBLE);
+        streamingNowBtn.setVisibility(View.INVISIBLE);
 
-            animation.setDuration(850);
-            animation.setInterpolator(new LinearInterpolator()); // do not alter
-            // animation rate
-            animation.setRepeatCount(Animation.INFINITE); // Repeat animation
-            // infinitely
-            animation.setRepeatMode(Animation.REVERSE); // Reverse animation at the
-            // end so the button will fade back in
-           // streamingNowBtn.startAnimation(animation);
-            streamingNow.startAnimation(animation);
+        animation.setDuration(850);
+        animation.setInterpolator(new LinearInterpolator()); // do not alter
+        // animation rate
+        animation.setRepeatCount(Animation.INFINITE); // Repeat animation
+        // infinitely
+        animation.setRepeatMode(Animation.REVERSE); // Reverse animation at the
+        // end so the button will fade back in
+        // streamingNowBtn.startAnimation(animation);
+        streamingNow.startAnimation(animation);
 
-            Log.i(TAG, "Service onStartCommand");
-            Toast.makeText(this,"Starting LSL!", Toast.LENGTH_SHORT).show();
+        Log.i(TAG, "Service onStartCommand");
+        Toast.makeText(this, "Starting LSL!", Toast.LENGTH_SHORT).show();
 
-            // Create outlets for all streams
-            new Thread(new Runnable() {
-                private double [][] all_acc;
+        //Setting All sensors
+        SensorManager msensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        assert msensorManager != null;
+        if (isAccelerometer)
+            sensorBridges.add(new SensorBridge(3, msensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)));
+        if (isLight)
+            sensorBridges.add(new SensorBridge(1, msensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)));
+        if (isProximity)
+            sensorBridges.add(new SensorBridge(1, msensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)));
+        if (isGravity)
+            sensorBridges.add(new SensorBridge(3, msensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)));
+        if (isLinearAcceleration)
+            sensorBridges.add(new SensorBridge(3, msensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)));
+        if (isRotation)
+            sensorBridges.add(new SensorBridge(5, msensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            if (isStepCounter)
+                sensorBridges.add(new SensorBridge(1, msensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)));
+        }
 
-                @Override
-                public void run() {
+        for (SensorBridge sensorBridge : sensorBridges) {
+            msensorManager.registerListener(sensorBridge, sensorBridge.mSensor, SensorManager.SENSOR_DELAY_UI);
+            sensorBridge.Start();
+        }
 
-                    if(isAccelerometer){
-                        accelerometer = new LSL.StreamInfo("Accelerometer "+ deviceName + generate_random_String(),
-                                "eeg", 3, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidaccelerometer"+uniqueID);
-                        try {
-                            accelerometerOutlet = new LSL.StreamOutlet(accelerometer);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (isLocation) {
+                    location = new LSL.StreamInfo("Location " + deviceName + generate_random_String(),
+                            "eeg", 2, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, "myuidstep" + uniqueID);
+                    try {
+                        locationOutlet = new LSL.StreamOutlet(location);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-
-                    if(isLight){
-                        light = new LSL.StreamInfo("Light "+ deviceName+ generate_random_String(),
-                                "eeg", 1, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidlight"+uniqueID);
-                        try {
-                            lightOutlet = new LSL.StreamOutlet(light);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    if(isProximity){
-                        proximity = new LSL.StreamInfo("Proximity "+ deviceName + generate_random_String(),
-                                "eeg", 1,SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidproximity"+uniqueID);
-                        try {
-                            proximityOutlet = new LSL.StreamOutlet(proximity);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    if(isLinearAcceleration){
-                        linearAcceleration = new LSL.StreamInfo("LinearAcceleration "+ deviceName + generate_random_String(),
-                                "eeg", 3,SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidlinearacceleration"+uniqueID);
-                        try {
-                            linearAccelerationOutlet = new LSL.StreamOutlet(linearAcceleration);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-
-                    if(isRotation){
-                        rotation = new LSL.StreamInfo("Rotation "+ deviceName + generate_random_String(),
-                                "eeg", 3, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidrotation"+uniqueID);
-                        try {
-                            rotationOutlet = new LSL.StreamOutlet(rotation);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-
-                    if(isGravity){
-                        gravity = new LSL.StreamInfo("Gravity "+ deviceName + generate_random_String(),
-                                "eeg", 3, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidgravity"+uniqueID);
-                        try {
-                            gravityOutlet = new LSL.StreamOutlet(gravity);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-
-                    if(isStepCounter){
-                        stepCount = new LSL.StreamInfo("StepCount " + deviceName + generate_random_String(),
-                                "eeg", 1, SAMPLING_RATE, LSL.ChannelFormat.float32, "myuidstep"+uniqueID);
-                        try {
-                            stepCountOutlet = new LSL.StreamOutlet(stepCount);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    // push samples while activity is running
-                    while (!MainActivity.checkFlag) {
-                        try {
-                            Thread.sleep(THREAD_INTERVAL);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        if(isAccelerometer){
-                            //Setting Accelerometer Data
-                            accelerometerData[0] = MainActivity.ax;
-                            accelerometerData[1] = MainActivity.ay;
-                            accelerometerData[2] = MainActivity.az;
-                           accelerometerOutlet.push_sample(accelerometerData);
-                        }
-
-                        if(isLight){
-                            //Setting Light Data
-                            lightData[0] =  MainActivity.lightInt;
-                            lightOutlet.push_sample(lightData);
-                        }
-
-                        if(isProximity){
-                            //Setting Proximity Data
-                            proximityData[0] = MainActivity.proximity;
-                            proximityOutlet.push_sample(proximityData);
-                        }
-
-                        if(isLinearAcceleration){
-                            //Setting Linear Acceleration Data
-                            linearAccelerationData[0] = MainActivity.linear_x;
-                            linearAccelerationData[1] = MainActivity.linear_y;
-                            linearAccelerationData[2] = MainActivity.linear_z;
-                            linearAccelerationOutlet.push_sample(linearAccelerationData);
-                        }
-
-                        if(isRotation){
-                            //Setting Rotation Data
-                            rotationData[0] = MainActivity.rotVec_x;
-                            rotationData[1] = MainActivity.rotVec_y;
-                            rotationData[2] = MainActivity.rotVec_z;
-                            rotationData[3] = MainActivity.rotVec_scalar;
-                            rotationOutlet.push_sample(rotationData);
-                        }
-
-                        if(isGravity){
-                            //Setting Gravity Data
-                            gravityData[0] = MainActivity.grav_x;
-                            gravityData[1] = MainActivity.grav_y;
-                            gravityData[2] = MainActivity.grav_z;
-                            gravityOutlet.push_sample(gravityData);
-                        }
-
-                        if(isStepCounter){
-                            //Setting Step Data
-                            stepCountData[0] = MainActivity.stepCounter;
-                            stepCountOutlet.push_sample(stepCountData);
-                        }
-                    }
-                    //Stop service once it finishes its task
-                    stopSelf();
                 }
-            }).start();
+                while (!MainActivity.checkFlag) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    if (isLocation) {
+                        if (MainActivity.hasNewLocation) {
+                            Log.e("Location", "Got new location: " + MainActivity.latitude + " " + MainActivity.longitude);
+                            locationData[0] = MainActivity.latitude;
+                            locationData[1] = MainActivity.longitude;
+                            locationOutlet.push_sample(locationData);
+                            MainActivity.hasNewLocation = false;
+                        } else {
+                            Log.e("Location", "No new location");
+                        }
+                    }
+                }
+                stopSelf();
+            }
+        }).start();
 
         // Audio gets its own thread without pauses
         new Thread(new Runnable() {
             @Override
             public void run() {
 
-                if(isAudio){
-                    audio = new LSL.StreamInfo("Audio "+ deviceName + generate_random_String(),
-                            "audio", audio_channel_count, AUDIO_RECORDING_RATE, LSL.ChannelFormat.float32, "myuidaudio"+uniqueID);
+                if (isAudio) {
+                    audio = new LSL.StreamInfo("Audio " + deviceName + generate_random_String(),
+                            "audio", audio_channel_count, AUDIO_RECORDING_RATE, LSL.ChannelFormat.float32, "myuidaudio" + uniqueID);
                     try {
                         audioOutlet = new LSL.StreamOutlet(audio);
                         recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, AUDIO_RECORDING_RATE, CHANNEL, FORMAT, BUFFER_SIZE);
@@ -299,7 +213,7 @@ public class LSLService extends Service {
                     }
                 }
                 while (!MainActivity.checkFlag) {
-                    if(isAudio){
+                    if (isAudio) {
                         recorder.startRecording();
                         recorder.read(audio_buffer, 0, audio_buffer.length);
                         audioOutlet.push_chunk(audio_buffer);
@@ -390,8 +304,7 @@ public class LSLService extends Service {
         MainActivity.isRunning = false;
 
         Log.i(TAG, "Service onDestroy");
-        Toast.makeText(this,"Closing LSL!", Toast.LENGTH_SHORT).show();
-        MainActivity.stepCounter = 0;
+        Toast.makeText(this, "Closing LSL!", Toast.LENGTH_SHORT).show();
 
         streamingNow.setVisibility(View.INVISIBLE);
         streamingNowBtn.setVisibility(View.INVISIBLE);
@@ -399,52 +312,30 @@ public class LSLService extends Service {
         streamingNow.clearAnimation();
         wakelock.release();
 
-        if(isAccelerometer){
-            accelerometerOutlet.close();
-            accelerometer.destroy();
+        //Unregister all sensor listeners
+        SensorManager msensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        assert msensorManager != null;
+
+        for (SensorBridge sensorBridge : sensorBridges) {
+            msensorManager.unregisterListener(sensorBridge);
+            sensorBridge.Stop();
         }
 
-        if(isLight){
-            lightOutlet.close();
-            light.destroy();
+        if (isLocation) {
 
+            locationOutlet.close();
+            location.destroy();
         }
 
-        if(isProximity){
-            proximityOutlet.close();
-            proximity.destroy();
-        }
-
-        if(isLinearAcceleration){
-            linearAccelerationOutlet.close();
-            linearAcceleration.destroy();
-        }
-
-        if(isRotation){
-            rotationOutlet.close();
-            rotation.destroy();
-        }
-
-        if(isGravity){
-            gravityOutlet.close();
-            gravity.destroy();
-        }
-
-        if(isStepCounter){
-            stepCountOutlet.close();
-            stepCount.destroy();
-        }
-
-        if(isAudio){
+        if (isAudio) {
             audioOutlet.close();
             audio.destroy();
 
             if (null != recorder) {
-                try{
-                    //my_stopRecording();
+                try {
                     recorder.stop();
                     recorder.release();
-                } catch(RuntimeException ex){
+                } catch (RuntimeException ex) {
                     recorder.release();
                 }
             }

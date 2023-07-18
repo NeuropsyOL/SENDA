@@ -12,11 +12,10 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -26,10 +25,17 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.location.Location;
 
 import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,24 +44,68 @@ import java.util.List;
 import static com.example.aliayubkhan.senda.SettingsActivity.getSamplingRates;
 import static com.example.aliayubkhan.senda.SettingsActivity.samplingRate_set_Check;
 
-public class MainActivity extends Activity implements SensorEventListener
-{
+public class MainActivity extends Activity {
+
+
+    // GoogleApiClient instance to connect to Google Play Services
+    private FusedLocationProviderClient mlocationProviderClient;
+    private LocationRequest mlocationRequest;
+    private LocationCallback mlocationCallback;
+
+
+    // Override the necessary lifecycle methods
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.e("Location", "onStart called");
+        // Check if the location permission is granted
+        if (checkLocationPermission()) {
+            // Request location updates
+            requestLocationUpdates();
+        } else {
+            // Request the location permission
+            requestPermissions();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Stop location updates
+        stopLocationUpdates();
+    }
+
+    // Start requesting location updates
+    private void requestLocationUpdates() {
+        Log.e("Location", "requestLocationUpdates called");
+        if (checkLocationPermission())
+            mlocationProviderClient.requestLocationUpdates(mlocationRequest, mlocationCallback, null);
+    }
+
+    // Stop location updates
+    private void stopLocationUpdates() {
+        Log.e("Location", "stopLocationUpdates called");
+        mlocationProviderClient.removeLocationUpdates(mlocationCallback);
+    }
+
     @SuppressLint("StaticFieldLeak")
     static TextView tv;
     Button start, stop;
 
-    static boolean isRunning  = false;
-    static int i = 0;
+    static boolean isRunning = false;
     static boolean checkFlag = false;
-    private SensorManager msensorManager;
-    List<Sensor> sensor;
-    List<String> SensorName = new ArrayList<String>();
+
+    //List<Sensor> sensor;
+    List<String> SensorName = new ArrayList<>();
     ArrayAdapter<String> adapter;
     ListView lv;
-    public static ArrayList<String> selectedItems=new ArrayList<String>();
+    public static ArrayList<String> selectedItems = new ArrayList<>();
 
-    //Sensor Names
-    Sensor mAccelerometer, mLight, mProximity, mGravity, mLinearAcceleration, mRotation, mStepCounter;
     //Sensors Checklist
     static Boolean isAccelerometer = false;
     static Boolean isLight = false;
@@ -65,6 +115,7 @@ public class MainActivity extends Activity implements SensorEventListener
     static Boolean isRotation = false;
     static Boolean isStepCounter = false;
     static Boolean isAudio = false;
+    static Boolean isLocation = true;
 
     //Streaming Identification
     @SuppressLint("StaticFieldLeak")
@@ -78,11 +129,13 @@ public class MainActivity extends Activity implements SensorEventListener
     ImageView settings_button;
 
     //Requesting run-time permissions
-    //Create placeholder for user's consent to record_audio permission.
+    //Create placeholder for user's consent to record_audio and access location permissions.
     //This will be used in handling callback
-    private final int MY_PERMISSIONS_RECORD_AUDIO = 1;
+    private final int PERMISSIONS_REQUEST_CODE = 1;
 
     public static boolean audioPermission = true;
+    public static boolean locationPermission = true;
+
     public static List<Intent> POWERMANAGER_INTENTS = Arrays.asList(
             new Intent().setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")),
             new Intent().setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity")),
@@ -96,72 +149,17 @@ public class MainActivity extends Activity implements SensorEventListener
             new Intent().setComponent(new ComponentName("com.asus.mobilemanager", "com.asus.mobilemanager.entry.FunctionActivity")).setData(android.net.Uri.parse("mobilemanager://function/entry/AutoStart"))
     );
 
-    //Initializing Sensor data Variables
-    static float ax,ay,az;
+    static boolean hasNewLocation;
+
     static {
-        ax = 0;
-        ay = 0;
-        az = 0;
+        hasNewLocation = false;
     }
 
-    // Force of gravity  Data (TYPE_GRAVITY)!
-    static float grav_x,grav_y,grav_z;
+    static double latitude, longitude;
+
     static {
-        grav_x = 0;
-        grav_y = 0;
-        grav_z = 0;
-    }
-
-    // Calibrated gyroscope Data (TYPE_GYROSCOPE)!
-    static private Sensor mGyroscope;
-    static float gyro_x,gyro_y,gyro_z;
-    static {
-        gyro_x = 0;
-        gyro_y = 0;
-        gyro_z = 0;
-    }
-
-    // Calibrated Rotation Vector Data (TYPE_ROTATION_VECTOR)!
-    static float rotVec_x,rotVec_y,rotVec_z,rotVec_scalar;
-    static {
-        rotVec_x      = 0;
-        rotVec_y      = 0;
-        rotVec_z      = 0;
-        rotVec_scalar = 0;
-    }
-
-    // Calibrated Step Counter Data (TYPE_STEP_COUNTER)!
-    static float stepCounter;
-    static {stepCounter = 0;}
-
-    static float lightInt;
-    static {
-        lightInt = 0;
-    }
-
-    static float orient_x,orient_y,orient_z;
-    static {   orient_x = 0;
-        orient_y = 0;
-        orient_z = 0;
-    }
-
-    static float proximity;
-    static {
-        proximity=0;
-    }
-
-    static float linear_x, linear_y, linear_z;
-    static {
-        linear_x = 0;
-        linear_y = 0;
-        linear_z = 0;
-    }
-
-    static float georotVec_x,georotVec_y,georotVec_z;
-    static {
-        georotVec_x      = 0;
-        georotVec_y      = 0;
-        georotVec_z      = 0;
+        latitude = 0;
+        longitude = 0;
     }
 
     public static int SENSOR_COUNT;
@@ -169,35 +167,61 @@ public class MainActivity extends Activity implements SensorEventListener
     public MainActivity() {
     }
 
-    /** Called when the activity is first created. */
+    /**
+     * Called when the activity is first created.
+     */
     @SuppressLint("SetTextI18n")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        tv = (TextView)findViewById(R.id.tv);
-        start = (Button)findViewById(R.id.startLSL);
-        stop = (Button)findViewById(R.id.stopLSL);
-        streamingNow = (TextView)findViewById(R.id.streamingNow);
-        streamingNowBtn = (ImageView) findViewById(R.id.streamingNowBtn);
-        //settings_button = (ImageView) findViewById(R.id.settings_btn);
-        //settings_button.setVisibility(View.VISIBLE);
 
-        requestAudioPermissions();
+
+        setContentView(R.layout.activity_main);
+        tv = (TextView) findViewById(R.id.tv);
+        start = (Button) findViewById(R.id.startLSL);
+        stop = (Button) findViewById(R.id.stopLSL);
+        streamingNow = (TextView) findViewById(R.id.streamingNow);
+        streamingNowBtn = (ImageView) findViewById(R.id.streamingNowBtn);
+        if (!checkPermissions())
+            requestPermissions();
+        if (checkLocationPermission()) {
+            Log.e("Location", "Creating LocationProviderClient.");
+            mlocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        } else {
+            Log.e("Location", "Do not have location permission!");
+        }
+
+        createLocationRequest();
+
+        // Create the LocationListener instance
+        mlocationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                // Handle the received location updates
+                if (locationResult != null) {
+                    Location location = locationResult.getLastLocation();
+                    if (location != null) {
+                        latitude = location.getLatitude();
+                        longitude = location.getLongitude();
+                        hasNewLocation = true;
+                        Log.e("Location", "lat: " + latitude + " long: " + longitude);
+                    }
+                }
+            }
+        };
+
         startPowerSaverIntent(this);
+
         final Intent intent = new Intent(this, LSLService.class);
 
         start.setOnClickListener(new View.OnClickListener() {
-            Long tsLong = System.currentTimeMillis()/1000;
-            String ts = tsLong.toString();
-
             @Override
             public void onClick(View v) {
-                if(!isRunning){
-                    if(!audioPermission){
-                        requestAudioPermissions();
+                if (!isRunning) {
+                    if (!audioPermission || !locationPermission) {
+                        requestPermissions();
                     }
-                    if(samplingRate_set_Check){ // this is set to false in every case, TODO delete this check
+                    if (samplingRate_set_Check) { // this is set to false in every case, TODO delete this check
                         getSamplingRates(); // we don't use user-set sampling rates now, but the sensor manager defaults
                     }
                     // make this a foreground service so that android does not kill it while it is in the background
@@ -218,132 +242,111 @@ public class MainActivity extends Activity implements SensorEventListener
             }
         });
 
-/*        settings_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-                startActivity(intent);
-            }
-        });*/
         tv.setText("Available Streams: ");
 
-        //Setting All sensors
-        msensorManager=(SensorManager) getSystemService(SENSOR_SERVICE);
-        assert msensorManager != null;
-        mAccelerometer = msensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mLight = msensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-        mProximity = msensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-        mGravity = msensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-        mLinearAcceleration = msensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-        mRotation = msensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT ) {
-            mStepCounter = msensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-        }
+        SensorManager msensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
-        //Registering listeners for Sensors
-        msensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_UI);//SensorManager.SENSOR_DELAY_FASTEST);
-        msensorManager.registerListener(this, mLight, SensorManager.SENSOR_DELAY_UI);
-        msensorManager.registerListener(this, mProximity, SensorManager.SENSOR_DELAY_UI);
-        msensorManager.registerListener(this, mGravity, SensorManager.SENSOR_DELAY_UI);
-        msensorManager.registerListener(this, mLinearAcceleration, SensorManager.SENSOR_DELAY_UI);
-        msensorManager.registerListener(this, mRotation, SensorManager.SENSOR_DELAY_UI);
-        msensorManager.registerListener(this, mStepCounter, SensorManager.SENSOR_DELAY_UI);
+        lv = (ListView)
 
-        lv = (ListView) findViewById (R.id.sensors);
+                findViewById(R.id.sensors);
         lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
-        sensor = msensorManager.getSensorList(Sensor.TYPE_ALL);
+        //sensor = msensorManager.getSensorList(Sensor.TYPE_ALL);
 
-        adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_view_text, R.id.streamsSelected, SensorName);
+        adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.list_view_text, R.id.streamsSelected, SensorName);
         lv.setAdapter(adapter);
 
-        //TODO check whether sensors are even available with given hardware
-        SensorName.add("Accelerometer");
-        SensorName.add("Light");
-        SensorName.add("Proximity");
-        SensorName.add("Gravity");
-        SensorName.add("Linear Acceleration");
-        SensorName.add("Rotation Vector");
-        SensorName.add("Step Count");
+        //Not available in Java 7: sensor.stream().anyMatch(s -> s.getType() == Sensor.TYPE_ACCELEROMETER))
+        if (msensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null)
+            SensorName.add("Accelerometer");
+        if (msensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) != null)
+            SensorName.add("Light");
+        if (msensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY) != null)
+            SensorName.add("Proximity");
+        if (msensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY) != null)
+            SensorName.add("Gravity");
+        if (msensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null)
+            SensorName.add("Linear Acceleration");
+        if (msensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) != null)
+            SensorName.add("Rotation Vector");
+        if (msensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null)
+            SensorName.add("Step Count");
         SensorName.add("Audio");
+        SensorName.add("Location");
 
         SENSOR_COUNT = lv.getAdapter().getCount();
 
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 // selected item
                 String selectedItem = ((TextView) view).getText().toString();
-                if(selectedItems.contains(selectedItem))
+                if (selectedItems.contains(selectedItem))
                     selectedItems.remove(selectedItem); //remove deselected item from the list of selected items
                 else
                     selectedItems.add(selectedItem); //add selected item to the list of selected items
-                    getSelectedItems();
+                getSelectedItems();
             }
         });
     } // end onCreate
-    
-    
+
+    protected void createLocationRequest() {
+        mlocationRequest = LocationRequest.create();
+        mlocationRequest.setInterval(1000);
+        mlocationRequest.setFastestInterval(500);
+        mlocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }
 
     private void myStartForegroundService(Intent intent) {
         intent.putExtra("inputExtra", "SENDA Foreground Service in Android");
         ContextCompat.startForegroundService(this, intent);
     }
 
-
-    private void requestAudioPermissions() {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            //When permission is not granted by user, show them message why this permission is needed.
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.RECORD_AUDIO)) {
-                Toast.makeText(this, "Please grant permissions to send Audio Stream", Toast.LENGTH_LONG).show();
-                audioPermission = false;
-
-                //Give user option to still opt-in the permissions
-
-            } else {
-                // Show user dialog to grant permission to record audio
-            }
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.RECORD_AUDIO},
-                    MY_PERMISSIONS_RECORD_AUDIO);
-        }
+    // Check if the permissions are already granted
+    private boolean checkPermissions() {
+        return checkAudioPermission() && checkLocationPermission();
     }
 
-    //Handling callback
+    private boolean checkLocationPermission() {
+        boolean hasFineLocationPermission = (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED);
+        boolean hasBackgroundLocationPermission = (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED);
+        Log.e("Location", "Location and Background permission: " + hasFineLocationPermission + " " + hasBackgroundLocationPermission);
+        return hasFineLocationPermission && hasBackgroundLocationPermission;
+    }
+
+    private boolean checkAudioPermission() {
+        return (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED);
+    }
+
+    private void requestPermissions() {
+        String[] permissions = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION};
+        ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
+    }
+
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSIONS_RECORD_AUDIO: {
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    audioPermission = true;
-                    // permission was granted, yay!
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    audioPermission = false;
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSIONS_REQUEST_CODE) {
+            for (int ii = 0; ii < permissions.length; ii++) {
+                if (permissions[ii].equals(Manifest.permission.RECORD_AUDIO))
+                    audioPermission = (grantResults[ii] == PackageManager.PERMISSION_GRANTED);
+                if (permissions[ii].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    Log.w("PermissionResult", Manifest.permission.ACCESS_FINE_LOCATION);
+                    locationPermission = (grantResults[ii] == PackageManager.PERMISSION_GRANTED);
                 }
             }
         }
     }
 
     @Override
-    public void onBackPressed()
-    {
-        if(backButtonCount >= 1)
-        {
+    public void onBackPressed() {
+        if (backButtonCount >= 1) {
             Intent intent = new Intent(Intent.ACTION_MAIN);
             intent.addCategory(Intent.CATEGORY_HOME);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             backButtonCount = 0;
-        }
-        else
-        {
+        } else {
             Toast.makeText(this, "Press the back button once again to close the application.", Toast.LENGTH_SHORT).show();
             backButtonCount++;
         }
@@ -396,95 +399,45 @@ public class MainActivity extends Activity implements SensorEventListener
     }
 
     private void getSelectedItems() {
-        for(String item:selectedItems){
+        for (String item : selectedItems) {
 
-            if(item.contains("Accelerometer")){
+            if (item.contains("Accelerometer")) {
                 isAccelerometer = true;
             }
-            if(item.contains("Light")){
+            if (item.contains("Light")) {
                 isLight = true;
             }
-            if(item.contains("Proximity")){
+            if (item.contains("Proximity")) {
                 isProximity = true;
             }
-            if(item.contains("Gravity")){
+            if (item.contains("Gravity")) {
                 isGravity = true;
             }
-            if(item.contains("Linear Acceleration")){
+            if (item.contains("Linear Acceleration")) {
                 isLinearAcceleration = true;
             }
-            if(item.contains("Rotation Vector")){
+            if (item.contains("Rotation Vector")) {
                 isRotation = true;
             }
-            if(item.contains("Step Count")){
+            if (item.contains("Step Count")) {
                 isStepCounter = true;
             }
-            if(item.contains("Audio")){
+            if (item.contains("Audio")) {
                 isAudio = true;
             }
+            if (item.contains("Location")) {
+                isLocation = true;
+            }
 
-//            if(selItems=="")
-//                selItems=item;
-//            else
-//                selItems+="/"+item;
+            //            if(selItems=="")
+            //                selItems=item;
+            //            else
+            //                selItems+="/"+item;
         }
         //Toast.makeText(this, selItems, Toast.LENGTH_LONG).show();
     }
 
-
-    @SuppressLint("SetTextI18n")
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-
-        Sensor sensor = event.sensor;
-        if (sensor.getType()==Sensor.TYPE_ACCELEROMETER){
-            ax=event.values[0];
-            ay=event.values[1];
-            az=event.values[2];
-            // inform LSL Service whenever we have a new value
-            //System.out.print("\nAccelerometer = "+ ax + " /" + ay + " /" + az+ " /\n");
-        } else if (sensor.getType() == Sensor.TYPE_LIGHT){
-            lightInt= event.values[0];
-            //System.out.print("Light = "+ lightInt + "\n");
-        } else if (sensor.getType() == Sensor.TYPE_PROXIMITY){
-            proximity = event.values[0];
-            //System.out.print("Proximity = "+ proximity + "\n");
-        } else if (sensor.getType() == Sensor.TYPE_GRAVITY){
-            grav_x = event.values[0];
-            grav_y = event.values[1];
-            grav_z = event.values[2];
-            //System.out.print("\nGravity = "+ grav_x + " /" + grav_y + " /" + grav_z+ " /\n");
-        } else if (sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION){
-            linear_x = event.values[0];
-            linear_y = event.values[1];
-            linear_z = event.values[2];
-            //System.out.print("\nLinea Acceleration = "+ linear_x + " /" + linear_y + " /" + linear_z+ " /\n");
-        } else if (sensor.getType() == Sensor.TYPE_ROTATION_VECTOR){
-            rotVec_x = event.values[0];
-            rotVec_y = event.values[1];
-            rotVec_z = event.values[2];
-            rotVec_scalar = event.values[3];
-            //System.out.print("\nRotation Vector = "+ rotVec_x + " /" + rotVec_y + " /" + rotVec_z + " /" +rotVec_scalar+ " /\n");
-        } else if (sensor.getType() == Sensor.TYPE_SIGNIFICANT_MOTION){
-            //nothing
-        } else if (sensor.getType() == Sensor.TYPE_STEP_COUNTER){
-            stepCounter = event.values[0];
-            //System.out.print("Step Counter = "+ stepCounter + "\n");
-        } else if (sensor.getType() == Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR){
-            georotVec_x = event.values[0];
-            georotVec_y = event.values[1];
-            georotVec_z = event.values[2];
-            //System.out.print("\nGeomagnetic = "+ georotVec_x + " /" + georotVec_y + " /" + georotVec_z+ " /\n");
-        }
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        // Toast.makeText(this, "The Sampling Rate of the Sensors has changed!", Toast.LENGTH_SHORT).show();
-        // this toast does not disappear anymore, the sampling rate keeps changing all the time (which is expected).
-    }
-
-    public static void showText(String s){
+    public static void showText(String s) {
         tv.setText(s);
     }
 }
