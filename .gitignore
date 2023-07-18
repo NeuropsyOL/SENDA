@@ -87,3 +87,6 @@ lint/tmp/
 
 # Android Profiling
 *.hprof
+
+# macOS pollution
+.DS_Store
