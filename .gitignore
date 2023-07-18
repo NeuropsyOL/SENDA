@@ -51,6 +51,18 @@ captures/
 # Comment next line if keeping position of elements in Navigation Editor is relevant for you
 .idea/navEditor.xml
 
+#User-specific stuff
+.idea/jsLibraryMappings.xml
+
+# Sensitive or high-churn files:
+.idea/dataSources.ids
+.idea/dataSources.xml
+.idea/dataSources.local.xml
+.idea/sqlDataSources.xml   
+.idea/dynamic.xml
+.idea/uiDesigner.xml
+
+
 # Keystore files
 # Uncomment the following lines if you do not want to check your keystore files in.
 #*.jks
@@ -90,3 +102,5 @@ lint/tmp/
 
 # macOS pollution
 .DS_Store
+
+
