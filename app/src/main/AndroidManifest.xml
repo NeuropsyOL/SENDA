@@ -8,9 +8,9 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-
-
-
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher_round"
@@ -39,8 +39,10 @@
         <service android:name=".LSLService" />
 
         <uses-library android:name="android.test.runner" />
+        <!-- Does not work w/ android.test.base on my Z1-3 test device
         <uses-library android:name="android.test.base" />
         <uses-library android:name="android.test.mock" />
+        -->
     </application>
 
 </manifest>
