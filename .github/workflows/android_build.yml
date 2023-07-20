@@ -16,6 +16,7 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v3
         with:
+          distribution: temurin
           java-version: '11'  # Change this to the required Java version for your Android project
 
       - name: Setup Gradle
