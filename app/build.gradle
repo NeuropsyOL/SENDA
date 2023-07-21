@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 31
-    buildToolsVersion '26.0.2'
+    ndkVersion "25.2.9519653"
     defaultConfig {
         vectorDrawables.useSupportLibrary = true
         applicationId "com.example.aliayubkhan.senda"
@@ -10,12 +10,6 @@ android {
         targetSdkVersion 31
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
-        externalNativeBuild {
-            cmake {
-                cppFlags "-std=c++11 -frtti -fexceptions"
-            }
-        }
     }
 
     buildTypes {
@@ -24,39 +18,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    externalNativeBuild {
-        cmake {
-            path "../CMakeLists.txt"
-        }
-    }
-
-    dexOptions {
-        javaMaxHeapSize "2048m"
-    }
-    // Gradle automatically adds 'android.test.runner' as a dependency.
-    useLibrary 'android.test.runner'
 }
 
 dependencies {
+    implementation project(':liblsl-Java')
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
     implementation 'androidx.annotation:annotation:1.1.0'
-    implementation fileTree(dir: '../libs', include: ['*.jar'])
     implementation 'com.google.android.gms:play-services:12.0.1'
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    testImplementation 'junit:junit:4.13'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
 }
-
-//copy native libraries to per project location
-task copyJniLibs(type: Copy) {
-    from '../jniLibs'
-    into 'src/main/jniLibs'
-}
-tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn(copyJniLibs)
-}
-clean.dependsOn 'cleanCopyJniLibs'
 
 
