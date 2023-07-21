@@ -42,8 +42,10 @@ Please feel free to contribute to this project by creating an issue first and th
 
 ## Authors
 
-* **Sarah Blum**
+* **Sarah Blum** - [s4rify](https://github.com/s4rify) 
 * **Ali Ayub Khan** - [AliAyub007](https://github.com/AliAyub007)
+* **Paul Maanen** - [pmaanen](https://github.com/pmaanen)
+
 
 ## License
 
