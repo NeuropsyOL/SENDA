@@ -25,11 +25,6 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.location.Location;
-
-import androidx.appcompat.widget.AppCompatCheckBox;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -37,21 +32,17 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
+import androidx.appcompat.widget.AppCompatCheckBox;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.example.aliayubkhan.senda.SettingsActivity.getSamplingRates;
-import static com.example.aliayubkhan.senda.SettingsActivity.samplingRate_set_Check;
 
 public class MainActivity extends Activity {
-
-
-    // GoogleApiClient instance to connect to Google Play Services
-    private FusedLocationProviderClient mlocationProviderClient;
-    private LocationRequest mlocationRequest;
-    private LocationCallback mlocationCallback;
-
 
     // Override the necessary lifecycle methods
     @Override
@@ -61,10 +52,11 @@ public class MainActivity extends Activity {
         // Check if the location permission is granted
         if (checkLocationPermission()) {
             // Request location updates
-            requestLocationUpdates();
+            isLocation = true;
         } else {
+            Log.w("onStart", "Do not have location permissions!");
             // Request the location permission
-            requestPermissions();
+            isLocation = false;
         }
     }
 
@@ -76,22 +68,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Stop location updates
-        stopLocationUpdates();
     }
 
     // Start requesting location updates
-    private void requestLocationUpdates() {
-        Log.e("Location", "requestLocationUpdates called");
-        if (checkLocationPermission())
-            mlocationProviderClient.requestLocationUpdates(mlocationRequest, mlocationCallback, null);
-    }
 
-    // Stop location updates
-    private void stopLocationUpdates() {
-        Log.e("Location", "stopLocationUpdates called");
-        mlocationProviderClient.removeLocationUpdates(mlocationCallback);
-    }
 
     @SuppressLint("StaticFieldLeak")
     static TextView tv;
@@ -136,31 +116,7 @@ public class MainActivity extends Activity {
     public static boolean audioPermission = true;
     public static boolean locationPermission = true;
 
-    public static List<Intent> POWERMANAGER_INTENTS = Arrays.asList(
-            new Intent().setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")),
-            new Intent().setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity")),
-            new Intent().setComponent(new ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity")),
-            new Intent().setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity")),
-            new Intent().setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity")),
-            new Intent().setComponent(new ComponentName("com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity")),
-            new Intent().setComponent(new ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity")),
-            new Intent().setComponent(new ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager")),
-            new Intent().setComponent(new ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity")),
-            new Intent().setComponent(new ComponentName("com.asus.mobilemanager", "com.asus.mobilemanager.entry.FunctionActivity")).setData(android.net.Uri.parse("mobilemanager://function/entry/AutoStart"))
-    );
-
-    static boolean hasNewLocation;
-
-    static {
-        hasNewLocation = false;
-    }
-
-    static double latitude, longitude;
-
-    static {
-        latitude = 0;
-        longitude = 0;
-    }
+    public static List<Intent> POWERMANAGER_INTENTS = Arrays.asList(new Intent().setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")), new Intent().setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity")), new Intent().setComponent(new ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity")), new Intent().setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity")), new Intent().setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity")), new Intent().setComponent(new ComponentName("com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity")), new Intent().setComponent(new ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity")), new Intent().setComponent(new ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager")), new Intent().setComponent(new ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity")), new Intent().setComponent(new ComponentName("com.asus.mobilemanager", "com.asus.mobilemanager.entry.FunctionActivity")).setData(android.net.Uri.parse("mobilemanager://function/entry/AutoStart")));
 
     public static int SENSOR_COUNT;
 
@@ -182,33 +138,7 @@ public class MainActivity extends Activity {
         stop = (Button) findViewById(R.id.stopLSL);
         streamingNow = (TextView) findViewById(R.id.streamingNow);
         streamingNowBtn = (ImageView) findViewById(R.id.streamingNowBtn);
-        if (!checkPermissions())
-            requestPermissions();
-        if (checkLocationPermission()) {
-            Log.e("Location", "Creating LocationProviderClient.");
-            mlocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        } else {
-            Log.e("Location", "Do not have location permission!");
-        }
 
-        createLocationRequest();
-
-        // Create the LocationListener instance
-        mlocationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                // Handle the received location updates
-                if (locationResult != null) {
-                    Location location = locationResult.getLastLocation();
-                    if (location != null) {
-                        latitude = location.getLatitude();
-                        longitude = location.getLongitude();
-                        hasNewLocation = true;
-                        Log.e("Location", "lat: " + latitude + " long: " + longitude);
-                    }
-                }
-            }
-        };
 
         startPowerSaverIntent(this);
 
@@ -218,12 +148,7 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 if (!isRunning) {
-                    if (!audioPermission || !locationPermission) {
-                        requestPermissions();
-                    }
-                    if (samplingRate_set_Check) { // this is set to false in every case, TODO delete this check
-                        getSamplingRates(); // we don't use user-set sampling rates now, but the sensor manager defaults
-                    }
+                    //TODO("Check permissions")
                     // make this a foreground service so that android does not kill it while it is in the background
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         myStartForegroundService(intent);
@@ -251,20 +176,15 @@ public class MainActivity extends Activity {
                 findViewById(R.id.sensors);
         lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
-        //sensor = msensorManager.getSensorList(Sensor.TYPE_ALL);
-
         adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.list_view_text, R.id.streamsSelected, SensorName);
         lv.setAdapter(adapter);
-
         //Not available in Java 7: sensor.stream().anyMatch(s -> s.getType() == Sensor.TYPE_ACCELEROMETER))
         if (msensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null)
             SensorName.add("Accelerometer");
-        if (msensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) != null)
-            SensorName.add("Light");
+        if (msensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) != null) SensorName.add("Light");
         if (msensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY) != null)
             SensorName.add("Proximity");
-        if (msensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY) != null)
-            SensorName.add("Gravity");
+        if (msensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY) != null) SensorName.add("Gravity");
         if (msensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null)
             SensorName.add("Linear Acceleration");
         if (msensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) != null)
@@ -289,17 +209,11 @@ public class MainActivity extends Activity {
         });
     } // end onCreate
 
-    protected void createLocationRequest() {
-        mlocationRequest = LocationRequest.create();
-        mlocationRequest.setInterval(1000);
-        mlocationRequest.setFastestInterval(500);
-        mlocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-    }
-
     private void myStartForegroundService(Intent intent) {
         intent.putExtra("inputExtra", "SENDA Foreground Service in Android");
         ContextCompat.startForegroundService(this, intent);
     }
+
 
     // Check if the permissions are already granted
     private boolean checkPermissions() {
@@ -323,8 +237,7 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                           int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSIONS_REQUEST_CODE) {
             for (int ii = 0; ii < permissions.length; ii++) {
@@ -371,17 +284,11 @@ public class MainActivity extends Activity {
                         }
                     });
 
-                    new AlertDialog.Builder(context)
-                            .setTitle(Build.MANUFACTURER + " Protected Apps")
-                            .setMessage(String.format("%s requires to be enabled in 'Protected Apps' to function properly.%n", context.getString(R.string.app_name)))
-                            .setView(dontShowAgain)
-                            .setPositiveButton("Go to settings", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    context.startActivity(intent);
-                                }
-                            })
-                            .setNegativeButton(android.R.string.cancel, null)
-                            .show();
+                    new AlertDialog.Builder(context).setTitle(Build.MANUFACTURER + " Protected Apps").setMessage(String.format("%s requires to be enabled in 'Protected Apps' to function properly.%n", context.getString(R.string.app_name))).setView(dontShowAgain).setPositiveButton("Go to settings", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            context.startActivity(intent);
+                        }
+                    }).setNegativeButton(android.R.string.cancel, null).show();
                     break;
                 }
             }
@@ -393,8 +300,7 @@ public class MainActivity extends Activity {
     }
 
     private static boolean isCallable(Context context, Intent intent) {
-        List<ResolveInfo> list = context.getPackageManager().queryIntentActivities(intent,
-                PackageManager.MATCH_DEFAULT_ONLY);
+        List<ResolveInfo> list = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
         return list.size() > 0;
     }
 

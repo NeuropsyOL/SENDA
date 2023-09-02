@@ -42,6 +42,8 @@ import static com.example.aliayubkhan.senda.MainActivity.isStepCounter;
 import static com.example.aliayubkhan.senda.MainActivity.isProximity;
 import static com.example.aliayubkhan.senda.MainActivity.isRotation;
 
+import com.example.aliayubkhan.senda.LocationBridge;
+
 
 /**
  * Created by aliayubkhan on 19/04/2018.
@@ -52,10 +54,10 @@ public class LSLService extends Service {
     private static final String TAG = "LSLService";
 
     //LSL Outlets
-    static LSL.StreamOutlet audioOutlet, locationOutlet = null;
+    static LSL.StreamOutlet audioOutlet = null;
 
     //LSL Streams
-    private LSL.StreamInfo audio, location = null;
+    private LSL.StreamInfo audio = null;
 
     // sensor sampling options
     private static final int AUDIO_RECORDING_RATE = 44100;
@@ -86,6 +88,8 @@ public class LSLService extends Service {
     short[] audio_buffer = new short[BUFFER_SIZE];
 
     private Vector<SensorBridge> sensorBridges = new Vector<>();
+
+    private LocationBridge mLocationBridge;
 
     public LSLService() {
         super();
@@ -163,39 +167,10 @@ public class LSLService extends Service {
             sensorBridge.Start();
         }
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (isLocation) {
-                    location = new LSL.StreamInfo("Location " + deviceName + generate_random_String(),
-                            "eeg", 2, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, "myuidstep" + uniqueID);
-                    try {
-                        locationOutlet = new LSL.StreamOutlet(location);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                while (!MainActivity.checkFlag) {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    if (isLocation) {
-                        if (MainActivity.hasNewLocation) {
-                            Log.e("Location", "Got new location: " + MainActivity.latitude + " " + MainActivity.longitude);
-                            locationData[0] = MainActivity.latitude;
-                            locationData[1] = MainActivity.longitude;
-                            locationOutlet.push_sample(locationData);
-                            MainActivity.hasNewLocation = false;
-                        } else {
-                            Log.e("Location", "No new location");
-                        }
-                    }
-                }
-                stopSelf();
-            }
-        }).start();
+        if(isLocation){
+            mLocationBridge=new LocationBridge(this);
+            mLocationBridge.Start();
+        }
 
         // Audio gets its own thread without pauses
         new Thread(new Runnable() {
@@ -322,9 +297,7 @@ public class LSLService extends Service {
         }
 
         if (isLocation) {
-
-            locationOutlet.close();
-            location.destroy();
+            mLocationBridge.Stop();
         }
 
         if (isAudio) {
