@@ -1,4 +1,4 @@
-package com.example.aliayubkhan.senda;
+package de.uol.neuropsy.senda;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -32,6 +32,7 @@ import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.aliayubkhan.senda.R;
 import com.xsens.dot.android.sdk.interfaces.DotScannerCallback;
 import com.xsens.dot.android.sdk.utils.DotScanner;
 

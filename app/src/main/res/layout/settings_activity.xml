@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:layout_gravity="center"
     android:background="#f2f2f2"
-    tools:context="com.example.aliayubkhan.senda.SettingsActivity">
+    tools:context="com.example.aliayubkhan.senda.de.example.aliayubkhan.senda.SettingsActivity">
 
     <Button
         android:id="@+id/samplingSetBtn"

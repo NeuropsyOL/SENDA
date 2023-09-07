@@ -1,7 +1,7 @@
-package com.example.aliayubkhan.senda;
+package de.uol.neuropsy.senda;
 
-import static com.example.aliayubkhan.senda.MainActivity.streamingNow;
-import static com.example.aliayubkhan.senda.MainActivity.streamingNowBtn;
+import static de.uol.neuropsy.senda.MainActivity.streamingNow;
+import static de.uol.neuropsy.senda.MainActivity.streamingNowBtn;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
@@ -25,6 +25,8 @@ import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+
+import com.example.aliayubkhan.senda.R;
 
 import java.util.Vector;
 

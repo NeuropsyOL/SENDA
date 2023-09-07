@@ -1,4 +1,4 @@
-package com.example.aliayubkhan.senda.utils;
+package de.uol.neuropsy.senda.utils;
 
 import android.hardware.Sensor;
 

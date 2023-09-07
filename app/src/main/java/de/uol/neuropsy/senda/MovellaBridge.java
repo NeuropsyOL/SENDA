@@ -1,4 +1,4 @@
-package com.example.aliayubkhan.senda;
+package de.uol.neuropsy.senda;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;

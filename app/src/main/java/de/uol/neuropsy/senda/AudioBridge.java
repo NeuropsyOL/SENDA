@@ -1,4 +1,4 @@
-package com.example.aliayubkhan.senda;
+package de.uol.neuropsy.senda;
 
 import android.content.Context;
 import android.media.AudioFormat;

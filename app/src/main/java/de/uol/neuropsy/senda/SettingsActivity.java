@@ -1,4 +1,4 @@
-package com.example.aliayubkhan.senda;
+package de.uol.neuropsy.senda;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -8,6 +8,8 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.aliayubkhan.senda.R;
 
 /**
  * Created by aliayubkhan on 21/10/2018.

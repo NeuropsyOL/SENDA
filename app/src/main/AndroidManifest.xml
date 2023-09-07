@@ -23,7 +23,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".SplashScreenActivity"
+            android:name="de.uol.neuropsy.senda.SplashScreenActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar">
@@ -33,18 +33,18 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name="de.uol.neuropsy.senda.MainActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             android:label="SENDA"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".SettingsActivity"
+            android:name="de.uol.neuropsy.senda.SettingsActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar"/>
 
-        <service android:name=".LSLService" />
+        <service android:name="de.uol.neuropsy.senda.LSLService" />
 
         <uses-library android:name="android.test.runner" />
         <!-- Does not work w/ android.test.base on my Z1-3 test device

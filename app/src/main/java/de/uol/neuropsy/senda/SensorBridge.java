@@ -1,6 +1,4 @@
-package com.example.aliayubkhan.senda;
-
-import static com.example.aliayubkhan.senda.utils.Utils.SimpleSensorType;
+package de.uol.neuropsy.senda;
 
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -11,6 +9,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.Random;
 
+import de.uol.neuropsy.senda.utils.Utils;
 import edu.ucsd.sccn.LSL;
 
 public class SensorBridge implements SensorEventListener {
@@ -21,7 +20,7 @@ public class SensorBridge implements SensorEventListener {
 
     SensorBridge(int dataSize, Sensor sensor) {
         mSensor=sensor;
-        mStreamInfo = new LSL.StreamInfo(SimpleSensorType(sensor.getType()) + " " + Build.MODEL,
+        mStreamInfo = new LSL.StreamInfo(Utils.SimpleSensorType(sensor.getType()) + " " + Build.MODEL,
                 "eeg", dataSize, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT);
         Log.e(TAG, "Created bridge for "+mStreamInfo.name());
     }
