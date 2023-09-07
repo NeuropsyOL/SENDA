@@ -1,15 +1,17 @@
 package com.example.aliayubkhan.senda;
-import edu.ucsd.sccn.LSL;
+
+import static com.example.aliayubkhan.senda.utils.Utils.SimpleSensorType;
+
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.os.Build;
 import android.util.Log;
 
-import static com.example.aliayubkhan.senda.utils.Utils.*;
-
 import java.io.IOException;
 import java.util.Random;
+
+import edu.ucsd.sccn.LSL;
 
 public class SensorBridge implements SensorEventListener {
     static String TAG=SensorBridge.class.getSimpleName();

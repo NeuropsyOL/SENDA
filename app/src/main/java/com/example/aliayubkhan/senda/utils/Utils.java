@@ -1,8 +1,8 @@
 package com.example.aliayubkhan.senda.utils;
 
-import java.util.HashMap;
-
 import android.hardware.Sensor;
+
+import java.util.HashMap;
 
 public class Utils {
     static private HashMap<Integer, String> mSensorMap = new HashMap<>();

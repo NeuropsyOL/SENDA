@@ -1,12 +1,9 @@
 package com.example.aliayubkhan.senda;
 
-import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.os.Build;
 import android.util.Log;
-
-import edu.ucsd.sccn.LSL;
 
 import com.xsens.dot.android.sdk.events.DotData;
 import com.xsens.dot.android.sdk.interfaces.DotDeviceCallback;
@@ -16,6 +13,8 @@ import com.xsens.dot.android.sdk.models.FilterProfileInfo;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
+import edu.ucsd.sccn.LSL;
 
 public class MovellaBridge implements DotDeviceCallback {
 

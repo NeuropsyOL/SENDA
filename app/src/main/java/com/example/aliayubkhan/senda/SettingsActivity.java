@@ -3,10 +3,11 @@ package com.example.aliayubkhan.senda;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 /**
  * Created by aliayubkhan on 21/10/2018.

@@ -1,5 +1,8 @@
 package com.example.aliayubkhan.senda;
-import edu.ucsd.sccn.LSL;
+
+import static com.example.aliayubkhan.senda.MainActivity.streamingNow;
+import static com.example.aliayubkhan.senda.MainActivity.streamingNowBtn;
+
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -10,9 +13,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
-import android.media.AudioFormat;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -26,14 +26,7 @@ import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
-import java.io.IOException;
-import java.util.Random;
 import java.util.Vector;
-
-import static com.example.aliayubkhan.senda.MainActivity.streamingNow;
-import static com.example.aliayubkhan.senda.MainActivity.streamingNowBtn;
-
-import com.example.aliayubkhan.senda.LocationBridge;
 
 
 /**

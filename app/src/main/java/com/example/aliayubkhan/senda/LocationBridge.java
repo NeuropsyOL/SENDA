@@ -1,7 +1,5 @@
 package com.example.aliayubkhan.senda;
 
-import edu.ucsd.sccn.LSL;
-
 import android.content.Context;
 import android.location.Location;
 import android.os.Build;
@@ -14,9 +12,10 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
-
 import java.io.IOException;
 import java.util.Random;
+
+import edu.ucsd.sccn.LSL;
 
 public class LocationBridge implements LocationListener {
 
