@@ -9,7 +9,6 @@ import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.aliayubkhan.senda.R;
 
 /**
  * Created by aliayubkhan on 21/10/2018.

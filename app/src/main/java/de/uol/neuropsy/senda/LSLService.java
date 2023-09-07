@@ -26,8 +26,6 @@ import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
-import com.example.aliayubkhan.senda.R;
-
 import java.util.Vector;
 
 
@@ -145,7 +143,7 @@ public class LSLService extends Service {
     // and https://androidwave.com/foreground-service-android-example/
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void startMyOwnForeground() {
-        String NOTIFICATION_CHANNEL_ID = "com.example.aliayubkhan.senda";
+        String NOTIFICATION_CHANNEL_ID = "de.uol.neuropsy.senda";
         String channelName = "SENDA Background Service";
         NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
         chan.setLightColor(Color.GREEN);
