@@ -22,15 +22,15 @@ public class LocationBridge implements LocationListener {
 
 
     // GoogleApiClient instance to connect to Google Play Services
-    private FusedLocationProviderClient mlocationProviderClient;
-    private LocationRequest mlocationRequest;
-    private LocationCallback mlocationCallback;
+    private final FusedLocationProviderClient mlocationProviderClient;
+    private final LocationRequest mlocationRequest;
+    private final LocationCallback mlocationCallback;
 
     private LSL.StreamOutlet mStreamOutlet;
 
     LocationBridge(Context context) {
-        LSL.StreamInfo mStreamInfo = new LSL.StreamInfo("Location" + " " + Build.MODEL + generate_random_String(),
-                "eeg", 2, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT);
+        LSL.StreamInfo mStreamInfo = new LSL.StreamInfo("Location" + " " + Build.MODEL,
+                "eeg", 4, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT);
         try {
             mStreamOutlet = new LSL.StreamOutlet(mStreamInfo);
         } catch (IOException e) {
@@ -51,10 +51,10 @@ public class LocationBridge implements LocationListener {
                 if (locationResult != null) {
                     Location location = locationResult.getLastLocation();
                     if (location != null) {
-                        double[] loc = {location.getLatitude(), location.getLatitude()};
+                        double[] loc = {location.getLatitude(), location.getLatitude(), location.getAltitude(),location.getAccuracy()};
                         mStreamOutlet.push_sample(loc);
-                        Log.i("LocationBridge",Double.toString(location.getLatitude())+" "+
-                                Double.toString((location.getLongitude())));
+                        Log.i("LocationBridge", location.getLatitude() +" "+
+                                location.getLongitude());
                     }
                 }
             }

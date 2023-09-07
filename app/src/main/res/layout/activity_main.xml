@@ -96,6 +96,17 @@
             android:textColor="#f2f2f2"
             tools:layout_editor_absoluteX="182dp"
             tools:layout_editor_absoluteY="453dp" />
+
+        <Button
+            android:id="@+id/btnScan"
+            android:layout_width="100dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="15dp"
+            android:layout_marginEnd="12dp"
+            android:layout_toStartOf="@+id/stopLSL"
+            android:layout_toEndOf="@+id/startLSL"
+            android:background="@drawable/shape"
+            android:text="Scan" />
     </RelativeLayout>
 
     <TextView

@@ -32,15 +32,6 @@ import java.util.Vector;
 
 import static com.example.aliayubkhan.senda.MainActivity.streamingNow;
 import static com.example.aliayubkhan.senda.MainActivity.streamingNowBtn;
-import static com.example.aliayubkhan.senda.MainActivity.isAudio;
-import static com.example.aliayubkhan.senda.MainActivity.isLocation;
-import static com.example.aliayubkhan.senda.MainActivity.isAccelerometer;
-import static com.example.aliayubkhan.senda.MainActivity.isGravity;
-import static com.example.aliayubkhan.senda.MainActivity.isLight;
-import static com.example.aliayubkhan.senda.MainActivity.isLinearAcceleration;
-import static com.example.aliayubkhan.senda.MainActivity.isStepCounter;
-import static com.example.aliayubkhan.senda.MainActivity.isProximity;
-import static com.example.aliayubkhan.senda.MainActivity.isRotation;
 
 import com.example.aliayubkhan.senda.LocationBridge;
 
@@ -51,56 +42,19 @@ import com.example.aliayubkhan.senda.LocationBridge;
 
 public class LSLService extends Service {
 
-    private static final String TAG = "LSLService";
+    private static final String TAG = LSLService.class.getSimpleName();
 
-    //LSL Outlets
-    static LSL.StreamOutlet audioOutlet = null;
+    private final Vector<SensorBridge> sensorBridges = new Vector<>();
 
-    //LSL Streams
-    private LSL.StreamInfo audio = null;
+    private LocationBridge mLocationBridge=null;
 
-    // sensor sampling options
-    private static final int AUDIO_RECORDING_RATE = 44100;
-
-    // the pull-values thread sleeps for this amount of ms in every iteration before pulling new sensor values from MainActivity and pushing them
-    private static final int THREAD_INTERVAL = 8;
-    // the sampling rate of every stream depends on the thread sleep interval, not the OS
-    private static final int SAMPLING_RATE = 1000 / THREAD_INTERVAL; // how many values do we receive per ms
-
-    // audio settings
-    private static final int CHANNEL = AudioFormat.CHANNEL_IN_STEREO;
-    private int audio_channel_count = 2;
-    private static final int FORMAT = AudioFormat.ENCODING_PCM_16BIT;
-    private AudioRecord recorder = null;
-
-    /**
-     * Factor by that the minimum buffer size is multiplied. The bigger the factor is the less
-     * likely it is that samples will be dropped, but more memory will be used. The minimum buffer
-     * size is determined by {@link AudioRecord#getMinBufferSize(int, int, int)} and depends on the
-     * recording settings.
-     */
-    private static final int BUFFER_SIZE_FACTOR = 2;
-
-    /**
-     * Size of the buffer where the audio data is stored by Android
-     */
-    private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(AUDIO_RECORDING_RATE, CHANNEL, FORMAT) * BUFFER_SIZE_FACTOR;
-    short[] audio_buffer = new short[BUFFER_SIZE];
-
-    private Vector<SensorBridge> sensorBridges = new Vector<>();
-
-    private LocationBridge mLocationBridge;
-
+    private AudioBridge mAudioBridge=null;
     public LSLService() {
         super();
     }
 
     String uniqueID = Build.FINGERPRINT;
     String deviceName = Build.MODEL;
-
-
-    // Data Variables
-    double[] locationData = new double[2];
 
     //Wake Lock
     PowerManager.WakeLock wakelock;
@@ -145,20 +99,21 @@ public class LSLService extends Service {
         //Setting All sensors
         SensorManager msensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         assert msensorManager != null;
-        if (isAccelerometer)
+        Log.e(TAG,"Got information from MainActivity "+ Integer.toString(intent.getIntExtra("TEST",0000)));
+        if (intent.getBooleanExtra("Accelerometer",false))
             sensorBridges.add(new SensorBridge(3, msensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)));
-        if (isLight)
+        if (intent.getBooleanExtra("Light",false))
             sensorBridges.add(new SensorBridge(1, msensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)));
-        if (isProximity)
+        if (intent.getBooleanExtra("Proximity",false))
             sensorBridges.add(new SensorBridge(1, msensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)));
-        if (isGravity)
+        if (intent.getBooleanExtra("Gravity",false))
             sensorBridges.add(new SensorBridge(3, msensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)));
-        if (isLinearAcceleration)
+        if (intent.getBooleanExtra("Linear Acceleration",false))
             sensorBridges.add(new SensorBridge(3, msensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)));
-        if (isRotation)
+        if (intent.getBooleanExtra("Rotation Vector",false))
             sensorBridges.add(new SensorBridge(5, msensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            if (isStepCounter)
+            if (intent.getBooleanExtra("Step Count",false))
                 sensorBridges.add(new SensorBridge(1, msensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)));
         }
 
@@ -167,37 +122,15 @@ public class LSLService extends Service {
             sensorBridge.Start();
         }
 
-        if(isLocation){
+        if(intent.getBooleanExtra("Location",false)){
             mLocationBridge=new LocationBridge(this);
             mLocationBridge.Start();
         }
 
-        // Audio gets its own thread without pauses
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-
-                if (isAudio) {
-                    audio = new LSL.StreamInfo("Audio " + deviceName + generate_random_String(),
-                            "audio", audio_channel_count, AUDIO_RECORDING_RATE, LSL.ChannelFormat.float32, "myuidaudio" + uniqueID);
-                    try {
-                        audioOutlet = new LSL.StreamOutlet(audio);
-                        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, AUDIO_RECORDING_RATE, CHANNEL, FORMAT, BUFFER_SIZE);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                while (!MainActivity.checkFlag) {
-                    if (isAudio) {
-                        recorder.startRecording();
-                        recorder.read(audio_buffer, 0, audio_buffer.length);
-                        audioOutlet.push_chunk(audio_buffer);
-                    }
-                }
-                stopSelf();
-            }
-        }).start();
-
+        if(intent.getBooleanExtra("Audio",false)){
+            mAudioBridge=new AudioBridge(this);
+            mAudioBridge.Start();
+        }
 
         MainActivity.isRunning = true;
 
@@ -251,22 +184,6 @@ public class LSLService extends Service {
 
     }
 
-    public String generate_random_String() {
-
-        int leftLimit = 97; // letter 'a'
-        int rightLimit = 122; // letter 'z'
-        int targetStringLength = 10;
-        Random random = new Random();
-        StringBuilder buffer = new StringBuilder(targetStringLength);
-        for (int i = 0; i < targetStringLength; i++) {
-            int randomLimitedInt = leftLimit + (int)
-                    (random.nextFloat() * (rightLimit - leftLimit + 1));
-            buffer.append((char) randomLimitedInt);
-        }
-        String generatedString = buffer.toString();
-        return generatedString;
-    }
-
     @Override
     public IBinder onBind(Intent arg0) {
         Log.i(TAG, "Service onBind");
@@ -296,22 +213,12 @@ public class LSLService extends Service {
             sensorBridge.Stop();
         }
 
-        if (isLocation) {
+        if (mLocationBridge!=null) {
             mLocationBridge.Stop();
         }
 
-        if (isAudio) {
-            audioOutlet.close();
-            audio.destroy();
-
-            if (null != recorder) {
-                try {
-                    recorder.stop();
-                    recorder.release();
-                } catch (RuntimeException ex) {
-                    recorder.release();
-                }
-            }
+        if (mAudioBridge!=null) {
+            mAudioBridge.Stop();
         }
     }
 }

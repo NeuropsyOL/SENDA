@@ -6,7 +6,7 @@ android {
     defaultConfig {
         vectorDrawables.useSupportLibrary = true
         applicationId "com.example.aliayubkhan.senda"
-        minSdkVersion 24
+        minSdkVersion 26
         targetSdkVersion 31
         versionCode 1
         versionName "1.0"
@@ -22,6 +22,7 @@ android {
 
 dependencies {
     implementation project(':liblsl-Java')
+    implementation files('libs/MovellaDotSdkCore_ANDROID_v2023.6.0_STABLE_RELEASE.aar')
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
     implementation 'androidx.annotation:annotation:1.1.0'
