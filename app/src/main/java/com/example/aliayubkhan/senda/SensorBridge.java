@@ -6,18 +6,22 @@ import android.hardware.SensorEventListener;
 import android.os.Build;
 import android.util.Log;
 
+import static com.example.aliayubkhan.senda.utils.Utils.*;
+
 import java.io.IOException;
 import java.util.Random;
 
 public class SensorBridge implements SensorEventListener {
-    private LSL.StreamInfo mStreamInfo;
+    static String TAG=SensorBridge.class.getSimpleName();
+    private final LSL.StreamInfo mStreamInfo;
     private LSL.StreamOutlet mStreamOutlet;
     public Sensor mSensor;
 
     SensorBridge(int dataSize, Sensor sensor) {
         mSensor=sensor;
-        mStreamInfo = new LSL.StreamInfo(mSensor.getName() + " " + Build.MODEL + generate_random_String(),
+        mStreamInfo = new LSL.StreamInfo(SimpleSensorType(sensor.getType()) + " " + Build.MODEL,
                 "eeg", dataSize, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT);
+        Log.e(TAG, "Created bridge for "+mStreamInfo.name());
     }
 
     public void Start() {
