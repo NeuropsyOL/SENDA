@@ -358,18 +358,17 @@ public class MainActivity extends Activity implements DotScannerCallback {
         stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                for (MovellaBridge device : mDevices.values()) {
-                    if(selectedItems.contains(device.getDisplayName())) {
-                        Log.e(TAG, "Sending STOP command to " + device.getDisplayName());
-                        device.Stop();
+                if (isRunning) {
+                    for (MovellaBridge device : mDevices.values()) {
+                        if (selectedItems.contains(device.getDisplayName())) {
+                            device.Stop();
+                        }
                     }
-                    else {
-                        Log.e(TAG,device.getDisplayName()+" not active, not sending STOP command.");
-                    }
+                    stopService(LSLIntent);
                 }
-                stopService(LSLIntent);
             }
         });
+    }
 
     void checkAvailableSensors() {
         SensorName.clear();
