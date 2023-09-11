@@ -56,6 +56,7 @@ public class MovellaBridge implements DotDeviceCallback {
             Log.e(TAG, e.toString());
             e.printStackTrace();
         }
+        assert mStreamOutlet!=null;
         mDevice.setMeasurementMode(DotPayload.PAYLOAD_TYPE_COMPLETE_EULER);
         mDevice.startMeasuring();
         Log.e(TAG, "Start measuring: " + mDevice.getTag() + " pushing into " + mStreamOutlet.info().name());
