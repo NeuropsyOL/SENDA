@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master  # Change this to your main branch name (e.g., master)
+      - development
 
 jobs:
   build:
