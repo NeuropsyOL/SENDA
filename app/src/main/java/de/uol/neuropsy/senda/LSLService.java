@@ -92,7 +92,6 @@ public class LSLService extends Service {
         //Setting All sensors
         SensorManager msensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         assert msensorManager != null;
-        Log.e(TAG,"Got information from MainActivity "+ Integer.toString(intent.getIntExtra("TEST",0000)));
         if (intent.getBooleanExtra("Accelerometer",false))
             sensorBridges.add(new SensorBridge(3, msensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)));
         if (intent.getBooleanExtra("Light",false))
