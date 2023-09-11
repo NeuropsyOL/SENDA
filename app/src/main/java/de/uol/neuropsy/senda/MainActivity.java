@@ -17,14 +17,18 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -134,35 +138,19 @@ public class MainActivity extends Activity implements DotScannerCallback {
 
         tv.setText("Available Streams: ");
         Log.i(TAG, "Bluetooth permission: " + Boolean.toString(checkBluetoothPermission()));
-        SensorManager msensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         lv = (ListView)
 
                 findViewById(R.id.sensors);
         lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-
         adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.list_view_text, R.id.streamsSelected, SensorName);
         lv.setAdapter(adapter);
-        //Not available in Java 7: sensor.stream().anyMatch(s -> s.getType() == Sensor.TYPE_ACCELEROMETER))
-        if (msensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null)
-            SensorName.add("Accelerometer");
-        if (msensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) != null) SensorName.add("Light");
-        if (msensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY) != null)
-            SensorName.add("Proximity");
-        if (msensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY) != null) SensorName.add("Gravity");
-        if (msensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null)
-            SensorName.add("Linear Acceleration");
-        if (msensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) != null)
-            SensorName.add("Rotation Vector");
-        if (msensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null)
-            SensorName.add("Step Count");
-        if (checkAudioPermission())
-            SensorName.add("Audio");
-        if (checkLocationPermission())
-            SensorName.add("Location");
+
 
         mXsScanner = new DotScanner(this, this);
         mXsScanner.setScanMode(ScanSettings.SCAN_MODE_BALANCED);
+
+        checkAvailableSensors();
 
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -199,12 +187,6 @@ public class MainActivity extends Activity implements DotScannerCallback {
         boolean hasFineLocationPermission = (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED);
         boolean hasBackgroundLocationPermission = (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED);
         Log.e("LOCATION", "Location and Background permission: " + hasFineLocationPermission + " " + hasBackgroundLocationPermission);
-        if (!hasFineLocationPermission)
-            requestPermissions();
-        if (!hasBackgroundLocationPermission) {
-            String[] permissions = new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION};
-            ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
-        }
         return hasFineLocationPermission && hasBackgroundLocationPermission;
     }
 
@@ -216,7 +198,7 @@ public class MainActivity extends Activity implements DotScannerCallback {
         return (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED);
     }
 
-    private void requestPermissions() {
+    private void requestAllPermissions() {
         String[] permissions = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT};
         ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
     }
@@ -389,6 +371,36 @@ public class MainActivity extends Activity implements DotScannerCallback {
             }
         });
 
+    void checkAvailableSensors() {
+        SensorName.clear();
+        SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        //Not available in Java 7: sensor.stream().anyMatch(s -> s.getType() == Sensor.TYPE_ACCELEROMETER))
+        if (sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null)
+            SensorName.add("Accelerometer");
+        if (sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) != null) SensorName.add("Light");
+        if (sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY) != null)
+            SensorName.add("Proximity");
+        if (sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY) != null) SensorName.add("Gravity");
+        if (sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null)
+            SensorName.add("Linear Acceleration");
+        if (sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) != null)
+            SensorName.add("Rotation Vector");
+        if (sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null)
+            SensorName.add("Step Count");
+        if (checkAudioPermission())
+            SensorName.add("Audio");
+        if (checkLocationPermission())
+            SensorName.add("Location");
+        adapter.notifyDataSetChanged();
+        TriggerScan();
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (isScanning)
+                    TriggerScan();
+            }
+        }, 10000);
     }
 }
 
