@@ -64,13 +64,15 @@ public class MovellaBridge implements DotDeviceCallback {
     void Stop() {
         if (mDevice != null)
             mDevice.stopMeasuring();
-        if (mStreamOutlet != null)
+        if (mStreamOutlet != null) {
             mStreamOutlet.close();
+        }
     }
 
-    public String getDisplayName(){
-        return mDevice.getName()+" "+mDevice.getTag();
+    public String getDisplayName() {
+        return mDevice.getName() + " " + mDevice.getTag();
     }
+
     @Override
     public void onDotConnectionChanged(String s, int i) {
     }
@@ -97,11 +99,15 @@ public class MovellaBridge implements DotDeviceCallback {
 
     @Override
     public void onDotDataChanged(String s, DotData dotData) {
-        if (dotData.getAcc() != null) {
-            mStreamOutlet.push_sample(dotData.getFreeAcc());
+        float[] data = new float[6];
+        for (int i = 0; i < 3; i++) {
+            data[i] = dotData.getFreeAcc()[i];
+            data[i + 3] = (float) dotData.getEuler()[i];
         }
-        else
-            Log.e(TAG, "Could not get acceleration!");
+        if (mStreamOutlet != null) {
+            mStreamOutlet.push_sample(data);
+        } else
+            Log.e(TAG, getDisplayName() + " mStreamOutlet is Null!");
     }
 
     @Override
@@ -109,8 +115,7 @@ public class MovellaBridge implements DotDeviceCallback {
         Log.e(TAG, "Movella initialized " + s + " " + mDevice.getTag() + " " + mDevice.getSerialNumber() + "!");
         mHost.onInitDone(this);
         mStreamInfo = new LSL.StreamInfo(mDevice.getName() + " " + mDevice.getTag(),
-                "eeg", 3, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT);
-        Log.e(TAG, "New stream info: " + mStreamInfo.name());
+                "misc", 6, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT);
     }
 
     @Override
