@@ -20,8 +20,11 @@ public class MovellaBridge implements DotDeviceCallback {
 
     static String TAG = MovellaBridge.class.getSimpleName();
 
-    private LSL.StreamInfo mStreamInfo;
-    private LSL.StreamOutlet mStreamOutlet;
+
+    private LSL.StreamInfo mMarkerStreamInfo;
+    private LSL.StreamOutlet mMarkerStreamOutlet;
+    private LSL.StreamInfo mDataStreamInfo;
+    private LSL.StreamOutlet mDataStreamOutlet;
 
     public MovellaBridge(Context context, BluetoothDevice btDevice, MainActivity hostActivity) {
         mHost = hostActivity;
@@ -51,21 +54,28 @@ public class MovellaBridge implements DotDeviceCallback {
 
     void Start() {
         try {
-            mStreamOutlet = new LSL.StreamOutlet(mStreamInfo);
+            mDataStreamOutlet = new LSL.StreamOutlet(mDataStreamInfo);
         } catch (IOException e) {
             Log.e(TAG, e.toString());
             e.printStackTrace();
         }
-        assert mStreamOutlet!=null;
+        assert mDataStreamOutlet != null;
         mDevice.setMeasurementMode(DotPayload.PAYLOAD_TYPE_COMPLETE_EULER);
         mDevice.startMeasuring();
     }
 
+    void StartMarker(){
+        try {
+            mMarkerStreamOutlet = new LSL.StreamOutlet(mMarkerStreamInfo);
+        } catch (IOException e) {
+            Log.e(TAG, e.toString());
+            e.printStackTrace();
+        }
+    }
     void Stop() {
-        if (mDevice != null)
-            mDevice.stopMeasuring();
-        if (mStreamOutlet != null) {
-            mStreamOutlet.close();
+        if (mDevice != null) mDevice.stopMeasuring();
+        if (mDataStreamOutlet != null) {
+            mDataStreamOutlet.close();
         }
     }
 
@@ -104,23 +114,26 @@ public class MovellaBridge implements DotDeviceCallback {
             data[i] = dotData.getFreeAcc()[i];
             data[i + 3] = (float) dotData.getEuler()[i];
         }
-        if (mStreamOutlet != null) {
-            mStreamOutlet.push_sample(data);
-        } else
-            Log.e(TAG, getDisplayName() + " mStreamOutlet is Null!");
+        if (mDataStreamOutlet != null) {
+            mDataStreamOutlet.push_sample(data);
+        } else Log.e(TAG, getDisplayName() + " mStreamOutlet is Null!");
     }
 
     @Override
     public void onDotInitDone(String s) {
         Log.e(TAG, "Movella initialized " + s + " " + mDevice.getTag() + " " + mDevice.getSerialNumber() + "!");
         mHost.onInitDone(this);
-        mStreamInfo = new LSL.StreamInfo(mDevice.getName() + " " + mDevice.getTag(),
-                "misc", 6, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT);
+        mDataStreamInfo = new LSL.StreamInfo(getDisplayName(), "misc", 6, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT);
+        mMarkerStreamInfo = new LSL.StreamInfo(getDisplayName() + " Marker", "Markers", 1, LSL.IRREGULAR_RATE, LSL.ChannelFormat.string, Build.FINGERPRINT);
     }
 
     @Override
     public void onDotButtonClicked(String s, long l) {
-
+        String[] sample = new String[1];
+        sample[0]=mDevice.getTag();
+        Log.e(TAG,"Button pressed!");
+        if(mMarkerStreamOutlet!=null)
+            mMarkerStreamOutlet.push_sample(sample);
     }
 
     @Override
