@@ -50,7 +50,7 @@ public class LocationBridge implements LocationListener {
                 if (locationResult != null) {
                     Location location = locationResult.getLastLocation();
                     if (location != null) {
-                        double[] loc = {location.getLatitude(), location.getLatitude(), location.getAltitude(),location.getAccuracy()};
+                        double[] loc = {location.getLatitude(), location.getLongitude(), location.getAltitude(),location.getAccuracy()};
                         mStreamOutlet.push_sample(loc);
                         Log.i("LocationBridge", location.getLatitude() +" "+
                                 location.getLongitude());
