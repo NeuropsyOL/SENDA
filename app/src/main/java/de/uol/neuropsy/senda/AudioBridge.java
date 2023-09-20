@@ -1,5 +1,6 @@
 package de.uol.neuropsy.senda;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -32,7 +33,7 @@ public class AudioBridge {
     // audio settings
     private static final int CHANNEL = AudioFormat.CHANNEL_IN_STEREO;
     private final int audio_channel_count = 2;
-    private static final int FORMAT = AudioFormat.ENCODING_PCM_16BIT;
+    private static final int FORMAT = AudioFormat.ENCODING_PCM_FLOAT;
     private AudioRecord recorder = null;
 
     /**
@@ -47,7 +48,7 @@ public class AudioBridge {
      * Size of the buffer where the audio data is stored by Android
      */
     private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(AUDIO_RECORDING_RATE, CHANNEL, FORMAT) * BUFFER_SIZE_FACTOR;
-    short[] audio_buffer = new short[BUFFER_SIZE];
+    float[] audio_buffer = new float[BUFFER_SIZE];
 
     public AudioBridge(Context context) {
         mAudioThread = new Thread(new Runnable() {
@@ -63,7 +64,7 @@ public class AudioBridge {
                 }
                 while (!checkFlag) {
                     recorder.startRecording();
-                    recorder.read(audio_buffer, 0, audio_buffer.length);
+                    recorder.read(audio_buffer,0,audio_buffer.length,AudioRecord.READ_BLOCKING);
                     audioOutlet.push_chunk(audio_buffer);
                 }
             }
