@@ -105,3 +105,8 @@ lint/tmp/
 .DS_Store
 
 
+# Test
+app/src/androidTest/
+
+# Assets are downloaded automatically
+app/src/main/assets/
