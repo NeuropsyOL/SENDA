@@ -1,5 +1,8 @@
 package de.uol.neuropsy.senda;
 
+import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA;
+import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION;
+import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE;
 import static de.uol.neuropsy.senda.MainActivity.streamingNow;
 import static de.uol.neuropsy.senda.MainActivity.streamingNowBtn;
 
@@ -166,7 +169,7 @@ public class LSLService extends Service {
                 .setCategory(Notification.CATEGORY_SERVICE)
                 .build();
         int information_id = 35; // this must be unique and not 0, otherwise it does not have a meaning
-        startForeground(information_id, notification);
+        startForeground(information_id, notification, FOREGROUND_SERVICE_TYPE_LOCATION | FOREGROUND_SERVICE_TYPE_CAMERA | FOREGROUND_SERVICE_TYPE_MICROPHONE);
     }
 
     private void createNotificationChannel() {

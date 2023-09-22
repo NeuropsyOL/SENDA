@@ -44,7 +44,8 @@
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar"/>
 
-        <service android:name="de.uol.neuropsy.senda.LSLService" />
+        <service android:name="de.uol.neuropsy.senda.LSLService"
+            android:foregroundServiceType="camera|location|microphone" />
 
         <uses-library android:name="android.test.runner" />
         <!-- Does not work w/ android.test.base on my Z1-3 test device

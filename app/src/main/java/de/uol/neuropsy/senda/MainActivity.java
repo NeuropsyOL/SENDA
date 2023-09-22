@@ -1,5 +1,7 @@
 package de.uol.neuropsy.senda;
 
+import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
