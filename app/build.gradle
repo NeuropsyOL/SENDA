@@ -1,4 +1,10 @@
+plugins {
+    id 'de.undercouch.download'
+}
+
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+//apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 33
@@ -20,6 +26,12 @@ android {
     }
 }
 
+// import DownloadModels task
+project.ext.ASSET_DIR = projectDir.toString() + '/src/main/assets'
+project.ext.TEST_ASSET_DIR = projectDir.toString() + '/src/androidTest/assets'
+
+apply from:'download_model.gradle'
+
 dependencies {
     implementation project(':liblsl-Java')
     implementation files('libs/MovellaDotSdkCore_ANDROID_v2023.6.0_STABLE_RELEASE.aar')
@@ -30,6 +42,9 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+
+    // Mediapipe Library
+    implementation 'com.google.mediapipe:tasks-audio:0.10.0'
 }
 
 

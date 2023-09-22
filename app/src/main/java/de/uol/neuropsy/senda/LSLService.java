@@ -26,6 +26,8 @@ import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
+import com.google.mediapipe.tasks.audio.core.RunningMode;
+
 import java.util.Vector;
 
 
@@ -39,9 +41,12 @@ public class LSLService extends Service {
 
     private final Vector<SensorBridge> sensorBridges = new Vector<>();
 
-    private LocationBridge mLocationBridge=null;
+    private LocationBridge mLocationBridge = null;
 
-    private AudioBridge mAudioBridge=null;
+    private AudioBridge mAudioBridge = null;
+
+    private AudioClassifierHelper mAudioClassifier=null;
+
     public LSLService() {
         super();
     }
@@ -92,20 +97,20 @@ public class LSLService extends Service {
         //Setting All sensors
         SensorManager msensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         assert msensorManager != null;
-        if (intent.getBooleanExtra("Accelerometer",false))
+        if (intent.getBooleanExtra("Accelerometer", false))
             sensorBridges.add(new SensorBridge(3, msensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)));
-        if (intent.getBooleanExtra("Light",false))
+        if (intent.getBooleanExtra("Light", false))
             sensorBridges.add(new SensorBridge(1, msensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)));
-        if (intent.getBooleanExtra("Proximity",false))
+        if (intent.getBooleanExtra("Proximity", false))
             sensorBridges.add(new SensorBridge(1, msensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)));
-        if (intent.getBooleanExtra("Gravity",false))
+        if (intent.getBooleanExtra("Gravity", false))
             sensorBridges.add(new SensorBridge(3, msensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)));
-        if (intent.getBooleanExtra("Linear Acceleration",false))
+        if (intent.getBooleanExtra("Linear Acceleration", false))
             sensorBridges.add(new SensorBridge(3, msensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)));
-        if (intent.getBooleanExtra("Rotation Vector",false))
+        if (intent.getBooleanExtra("Rotation Vector", false))
             sensorBridges.add(new SensorBridge(5, msensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            if (intent.getBooleanExtra("Step Count",false))
+            if (intent.getBooleanExtra("Step Count", false))
                 sensorBridges.add(new SensorBridge(1, msensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)));
         }
 
@@ -114,16 +119,18 @@ public class LSLService extends Service {
             sensorBridge.Start();
         }
 
-        if(intent.getBooleanExtra("Location",false)){
-            mLocationBridge=new LocationBridge(this);
+        if (intent.getBooleanExtra("Location", false)) {
+            mLocationBridge = new LocationBridge(this);
             mLocationBridge.Start();
         }
 
-        if(intent.getBooleanExtra("Audio",false)){
-            mAudioBridge=new AudioBridge(this);
+        if (intent.getBooleanExtra("Audio", false)) {
+            mAudioBridge = new AudioBridge(this);
             mAudioBridge.Start();
         }
 
+        //if(intent.getBooleanExtra(""))
+        mAudioClassifier = new AudioClassifierHelper(this, AudioClassifierHelper.DISPLAY_THRESHOLD, AudioClassifierHelper.DEFAULT_OVERLAP, 1, RunningMode.AUDIO_STREAM, null);
         MainActivity.isRunning = true;
 
         // This service is killed by the OS if it is not started as background service
@@ -205,12 +212,14 @@ public class LSLService extends Service {
             sensorBridge.Stop();
         }
 
-        if (mLocationBridge!=null) {
+        if (mLocationBridge != null) {
             mLocationBridge.Stop();
         }
 
-        if (mAudioBridge!=null) {
+        if (mAudioBridge != null) {
             mAudioBridge.Stop();
         }
+        if(mAudioClassifier!= null)
+            mAudioClassifier.stopAudioClassification();
     }
 }

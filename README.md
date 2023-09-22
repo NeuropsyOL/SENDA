@@ -53,10 +53,7 @@ This project is licensed under GNU General Public License License - see the [LIC
 
 ## Acknowledgments
 
-[liblsl Library](https://github.com/sccn/labstreaminglayer/tree/master/LSL): I used this library to develop this application. 
-
-## Cite As: 
-You can cite this work in your research using text below:
-
-    Ali Ayub Khan. (2018, October 24). AliAyub007/SENDA: New features added (Version 1.0.1). Zenodo. http://doi.org/10.5281/zenodo.1469957
+[liblsl Library](https://github.com/sccn/labstreaminglayer/tree/master/LSL): I used this library to develop this application.
+[Google Mediapipe](https://developers.google.com/mediapipe): The audio classifier uses portions of the Google MediaPipe example code released under the Apache v2.0 license.
+## Cite As:
 
