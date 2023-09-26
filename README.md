@@ -68,8 +68,12 @@ Please feel free to contribute to this project by creating an issue first and th
 
 This project is licensed under GNU General Public License License - see the [LICENSE.md](https://github.com/AliAyub007/SENDA/blob/master/LICENSE) file for details
 
-## Acknowledgments
 
+## Known Issues
+- Sometimes the scan button complains about mission bluetooth permissions but does the scan for Movella sensors anyway.
+- On a new installation multiple restarts of the app might be necessary until it asks for and notices newly granted permissions
+
+## Acknowledgments
 [liblsl Library](https://github.com/sccn/labstreaminglayer/tree/master/LSL): I used this library to develop this application.
 [Google Mediapipe](https://developers.google.com/mediapipe): The audio classifier uses portions of the Google MediaPipe example code released under the Apache v2.0 license.
 ## Cite As:
