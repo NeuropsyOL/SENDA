@@ -17,8 +17,9 @@ import java.util.Random;
 
 import edu.ucsd.sccn.LSL;
 
-public class LocationBridge implements LocationListener {
+public class LocationBridge {
 
+    static String TAG = LocationBridge.class.getSimpleName();
 
     // GoogleApiClient instance to connect to Google Play Services
     private final FusedLocationProviderClient mlocationProviderClient;

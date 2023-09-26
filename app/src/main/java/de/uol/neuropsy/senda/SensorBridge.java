@@ -7,10 +7,10 @@ import android.os.Build;
 import android.util.Log;
 
 import java.io.IOException;
-import java.util.Random;
+
+import edu.ucsd.sccn.LSL;
 
 import de.uol.neuropsy.senda.utils.Utils;
-import edu.ucsd.sccn.LSL;
 
 public class SensorBridge implements SensorEventListener {
     static String TAG=SensorBridge.class.getSimpleName();
