@@ -54,6 +54,12 @@ public class MovellaBridge implements DotDeviceCallback {
 
     void Start() {
         try {
+            mMarkerStreamOutlet = new LSL.StreamOutlet(mMarkerStreamInfo);
+        } catch (IOException e) {
+            Log.e(TAG, e.toString());
+            e.printStackTrace();
+        }
+        try {
             mDataStreamOutlet = new LSL.StreamOutlet(mDataStreamInfo);
         } catch (IOException e) {
             Log.e(TAG, e.toString());
@@ -62,20 +68,16 @@ public class MovellaBridge implements DotDeviceCallback {
         assert mDataStreamOutlet != null;
         mDevice.setMeasurementMode(DotPayload.PAYLOAD_TYPE_COMPLETE_EULER);
         mDevice.startMeasuring();
+        Log.e(TAG, getDisplayName() + " StartMeasuring");
     }
 
-    void StartMarker(){
-        try {
-            mMarkerStreamOutlet = new LSL.StreamOutlet(mMarkerStreamInfo);
-        } catch (IOException e) {
-            Log.e(TAG, e.toString());
-            e.printStackTrace();
-        }
-    }
     void Stop() {
         if (mDevice != null) mDevice.stopMeasuring();
         if (mDataStreamOutlet != null) {
             mDataStreamOutlet.close();
+        }
+        if (mMarkerStreamOutlet != null) {
+            mMarkerStreamOutlet.close();
         }
     }
 
