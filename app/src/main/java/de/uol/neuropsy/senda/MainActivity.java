@@ -1,10 +1,14 @@
 package de.uol.neuropsy.senda;
 
+import static java.lang.Thread.sleep;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.ScanSettings;
 import android.content.ComponentName;
 import android.content.Context;
@@ -20,6 +24,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -49,11 +54,8 @@ public class MainActivity extends Activity implements DotScannerCallback {
 
     private Boolean isScanning = false;
     private DotScanner mXsScanner;
-    //public ArrayList<MovellaBridge> mDevices = new ArrayList<>();
     public HashMap<String, MovellaBridge> mConnectedDevices = new HashMap<>();
-
     public HashMap<String, MovellaBridge> mActiveDevices = new HashMap<>();
-
     static String TAG = MainActivity.class.getSimpleName();
 
     @SuppressLint("StaticFieldLeak")
@@ -82,10 +84,6 @@ public class MainActivity extends Activity implements DotScannerCallback {
     //Create placeholder for user's consent to record_audio and access location permissions.
     //This will be used in handling callback
     private final int PERMISSIONS_REQUEST_CODE = 1;
-
-    public static boolean audioPermission = true;
-    public static boolean locationPermission = true;
-
     public static List<Intent> POWERMANAGER_INTENTS = Arrays.asList(new Intent().setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")), new Intent().setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity")), new Intent().setComponent(new ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity")), new Intent().setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity")), new Intent().setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity")), new Intent().setComponent(new ComponentName("com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity")), new Intent().setComponent(new ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity")), new Intent().setComponent(new ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager")), new Intent().setComponent(new ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity")), new Intent().setComponent(new ComponentName("com.asus.mobilemanager", "com.asus.mobilemanager.entry.FunctionActivity")).setData(android.net.Uri.parse("mobilemanager://function/entry/AutoStart")));
 
     private Intent LSLIntent = null;
@@ -95,15 +93,6 @@ public class MainActivity extends Activity implements DotScannerCallback {
     protected void onStart() {
         super.onStart();
         Log.e("Location", "onStart called");
-        // Check if the location permission is granted
-        if (checkLocationPermission()) {
-            // Request location updates
-
-        } else {
-            Log.w("onStart", "Do not have location permissions!");
-            // Request the location permission
-
-        }
     }
 
     @Override
@@ -141,47 +130,40 @@ public class MainActivity extends Activity implements DotScannerCallback {
 
         startPowerSaverIntent(this);
 
-
         tv.setText("Available Streams: ");
-        Log.i(TAG, "Bluetooth permission: " + Boolean.toString(checkBluetoothPermission()));
-
-        lv = (ListView)
-
-                findViewById(R.id.sensors);
+        lv = (ListView) findViewById(R.id.sensors);
         lv.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.list_view_text, R.id.streamsSelected, SensorName);
         lv.setAdapter(adapter);
-
 
         mXsScanner = new DotScanner(this, this);
         mXsScanner.setScanMode(ScanSettings.SCAN_MODE_BALANCED);
 
         checkAvailableSensors();
 
-        if (!checkBluetoothPermission()) {
-            requestAllPermissions();
-        }
-        if (!checkLocationPermission()) {
-            requestLocationPermissions();
-        }
-
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 // selected item
                 String selectedItem = ((TextView) view).getText().toString();
-                if (selectedItems.contains(selectedItem))
-                    selectedItems.remove(selectedItem); //remove deselected item from the list of selected items
-                else
-                    selectedItems.add(selectedItem); //add selected item to the list of selected items
-                getSelectedItems();
+                if (selectedItem.contains("Audio") && lv.isItemChecked(position)) {
+                    if (!checkAudioPermission()) {
+                        lv.setItemChecked(position, false);
+                        requestAudioPermissions(1000 + position);
+                    }
+                }
+                if (selectedItem.contains("Location") && lv.isItemChecked(position)) {
+                    if (!checkLocationPermission()) {
+                        requestLocationPermissions(1000 + position);
+                        lv.setItemChecked(position, false);
+                    }
+                }
             }
         });
     } // end onCreate
 
     public Boolean isActivated(String s) {
         for (String item : selectedItems) {
-            if (item.equals(s))
-                return true;
+            if (item.equals(s)) return true;
         }
         return false;
     }
@@ -207,93 +189,72 @@ public class MainActivity extends Activity implements DotScannerCallback {
     }
 
     private boolean checkBluetoothPermission() {
-        return (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED);
+        return (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED);
     }
 
-    private boolean checkBluetoothAndPermission(){
-        boolean isBluetoothEnabled=false;
-        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.S) {
-        isBluetoothEnabled=(checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)==PackageManager.PERMISSION_GRANTED);
-        }
-        else isBluetoothEnabled=Utils.isBluetoothAdapterEnabled(this);
-        boolean isPermissionGranted= Utils.isLocationPermissionGranted(this);
-        if(isBluetoothEnabled){
-            if(!isPermissionGranted) Utils.requestLocationPermission(this, PERMISSIONS_REQUEST_CODE);
-        }
-        else {
-            if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.S){
-                requestBluetoothPermissions();
-                Log.i(TAG,"requestBluetoothPermissions()");
-            }
-            else {
-                Utils.requestEnableBluetooth(this,1001);
-                Log.i(TAG,"requestEnableBluetooth()");
-            }
-        }
-        boolean status = isBluetoothEnabled && isPermissionGranted;
-        Log.i(TAG,"checkBluetoothAndPermission() "+isBluetoothEnabled+" "+isPermissionGranted);
-        return status;
+    private void requestAudioPermissions(int requestCode) {
+        String[] permissions = new String[]{Manifest.permission.RECORD_AUDIO};
+        ActivityCompat.requestPermissions(this, permissions, requestCode);
     }
 
-    private void requestAllPermissions() {
-        String[] permissions = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT};
-        ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
-    }
-
-    private void requestBluetoothPermissions() {
+    private void requestBluetoothPermissions(int requestCode) {
         String[] permissions = new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT};
-        ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
+        ActivityCompat.requestPermissions(this, permissions, requestCode);
     }
 
-    private void requestBluetoothScanPermissions() {
-        String[] permissions = new String[]{Manifest.permission.BLUETOOTH_CONNECT};
-        ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
+    private boolean checkAndRequestBluetoothEnabled() {
+        BluetoothManager bluetoothManager = getSystemService(BluetoothManager.class);
+        BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
+        if (bluetoothAdapter == null) {
+            Toast.makeText(this, "This device does not support Bluetooth", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (!bluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, 1002);
+            return false;
+        }
+        return true;
     }
 
-    private void requestLocationPermissions() {
+    private void requestLocationPermissions(int requestCode) {
         String[] permissions;
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
             permissions = new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION};
         else {
-            permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION};
+            permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
         }
-        String s = "";
-        for (String p : permissions)
-            s += p + " ";
-        Log.e(TAG, "Requesting " + s);
-        ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
+        ActivityCompat.requestPermissions(this, permissions, requestCode);
     }
 
-    private void requestBackgroundLocationPermission() {
+    private void requestBackgroundLocationPermission(int requestCode) {
         String[] permissions = new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION};
-        ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
+        ActivityCompat.requestPermissions(this, permissions, requestCode);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        String p = "";
-        for (String s : permissions) {
-            p += s + " ";
-        }
-        for (Integer s : grantResults) {
-            p += s + " ";
-        }
-        Log.e(TAG, Integer.toString(requestCode) + " " + p);
-        if (requestCode == PERMISSIONS_REQUEST_CODE) {
-            for (int ii = 0; ii < permissions.length; ii++) {
-                if (permissions[ii].equals(Manifest.permission.RECORD_AUDIO))
-                    audioPermission = (grantResults[ii] == PackageManager.PERMISSION_GRANTED);
+        for (int ii = 0; ii < permissions.length; ii++) {
+            if (grantResults[ii] == PackageManager.PERMISSION_GRANTED) {
+                // FINE_LOCATION needs special treatment b/c we need to request BACKGROUND_LOCATION after it
                 if (permissions[ii].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                    Log.w("PermissionResult", Manifest.permission.ACCESS_FINE_LOCATION);
-                    locationPermission = (grantResults[ii] == PackageManager.PERMISSION_GRANTED);
+                    // Background location has to be requested after fine location is granted.
                     if (!checkBackgroundLocationPermission()) {
-                        requestBackgroundLocationPermission();
+                        requestBackgroundLocationPermission(requestCode);
                     }
                 }
+                // All other cases (including background location) set the list item checked if we came from the OnClickListener
+                else if (requestCode >= 1000) {
+                    lv.setItemChecked(requestCode - 1000, true);
+                }
+            } else {
+                // Denied permission and should not show rationale -> Permission request is invisible to user, show error message
+                if (!shouldShowRequestPermissionRationale(permissions[ii]))
+                    //TODO Map permissions string to human readable permission
+                    Toast.makeText(this, "Denied " + permissions[ii], Toast.LENGTH_SHORT).show();
             }
         }
-        checkAvailableSensors();
     }
 
     @Override
@@ -349,17 +310,6 @@ public class MainActivity extends Activity implements DotScannerCallback {
         return list.size() > 0;
     }
 
-    private void getSelectedItems() {
-        for (String item : selectedItems) {
-            if (LSLIntent != null)
-                LSLIntent.putExtra(item, true);
-        }
-    }
-
-    public static void showText(String s) {
-        tv.setText(s);
-    }
-
     @Override
     public void onDotScanned(BluetoothDevice bluetoothDevice, int i) {
         new MovellaBridge(this, bluetoothDevice, this);
@@ -367,12 +317,12 @@ public class MainActivity extends Activity implements DotScannerCallback {
     }
 
     void TriggerScan() {
-        if (!checkBluetoothAndPermission()) {
-            Toast.makeText(this, "Missing bluetooth permission!", Toast.LENGTH_SHORT).show();
-            //requestBluetoothScanPermissions();
-            //requestBluetoothPermissions();
+        if (!checkBluetoothPermission()) {
+            Log.i(TAG, "Do not have Bluetooth permission, asking for it");
+            requestBluetoothPermissions(PERMISSIONS_REQUEST_CODE);
             return;
-        }
+        } else if (!checkAndRequestBluetoothEnabled()) return;
+
         Button scan = findViewById(R.id.btnScan);
         if (isScanning) {
             Log.e(TAG, "Stopping scan");
@@ -411,8 +361,14 @@ public class MainActivity extends Activity implements DotScannerCallback {
             @Override
             public void onClick(View v) {
                 if (!isRunning) {
-                    if (!checkLocationPermission())
-                        requestLocationPermissions();
+
+                    // Build the list of selected items and give it over to the LSLIntent
+                    SparseBooleanArray checked = lv.getCheckedItemPositions();
+                    for (int i = 0; i < lv.getAdapter().getCount(); i++) {
+                        Log.e(TAG, lv.getItemAtPosition(i).toString() + " " + checked.get(i));
+                        LSLIntent.putExtra(lv.getItemAtPosition(i).toString(), checked.get(i));
+                    }
+
                     for (MovellaBridge device : mConnectedDevices.values()) {
                         if (selectedItems.contains(device.getDisplayName())) {
                             mActiveDevices.put(device.getDevice().getAddress(), device);
@@ -420,7 +376,7 @@ public class MainActivity extends Activity implements DotScannerCallback {
                             device.Start();
                         }
                     }
-                    //TODO("Check permissions")
+
                     // make this a foreground service so that android does not kill it while it is in the background
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         myStartForegroundService(LSLIntent);
@@ -429,28 +385,19 @@ public class MainActivity extends Activity implements DotScannerCallback {
                         startService(LSLIntent);
                     }
                 }
-
             }
         });
 
         Button scan = findViewById(R.id.btnScan);
-        scan.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                TriggerScan();
-            }
-        });
+        scan.setOnClickListener(v -> TriggerScan());
 
         Button stop = (Button) findViewById(R.id.stopLSL);
-        stop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (isRunning) {
-                    for (MovellaBridge device : mActiveDevices.values()) {
-                        device.Stop();
-                    }
-                    stopService(LSLIntent);
+        stop.setOnClickListener(v -> {
+            if (isRunning) {
+                for (MovellaBridge device : mActiveDevices.values()) {
+                    device.Stop();
                 }
+                stopService(LSLIntent);
             }
         });
     }
@@ -471,22 +418,13 @@ public class MainActivity extends Activity implements DotScannerCallback {
             SensorName.add("Rotation Vector");
         if (sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null)
             SensorName.add("Step Count");
-        if (checkAudioPermission()) {
-            SensorName.add("Audio");
-            SensorName.add("Audio classifier");
-        }
-        if (checkLocationPermission())
-            SensorName.add("Location");
+        // Do not need to check: Asking for audio permission if user selects this item
+        SensorName.add("Audio");
+        // Do not need to check: Asking for audio permission if user selects this item
+        SensorName.add("Audio classifier");
+        // Do not need to check: Asking for location permission if user selects this item
+        SensorName.add("Location");
         adapter.notifyDataSetChanged();
-        //TriggerScan();
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (isScanning)
-                    TriggerScan();
-            }
-        }, 10000);
     }
 }
 
