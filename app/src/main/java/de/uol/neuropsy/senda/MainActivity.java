@@ -42,13 +42,17 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import de.uol.neuropsy.senda.utils.Utils;
+
 
 public class MainActivity extends Activity implements DotScannerCallback {
 
     private Boolean isScanning = false;
     private DotScanner mXsScanner;
     //public ArrayList<MovellaBridge> mDevices = new ArrayList<>();
-    public HashMap<String, MovellaBridge> mDevices = new HashMap<>();
+    public HashMap<String, MovellaBridge> mConnectedDevices = new HashMap<>();
+
+    public HashMap<String, MovellaBridge> mActiveDevices = new HashMap<>();
 
     static String TAG = MainActivity.class.getSimpleName();
 
@@ -154,6 +158,13 @@ public class MainActivity extends Activity implements DotScannerCallback {
 
         checkAvailableSensors();
 
+        if (!checkBluetoothPermission()) {
+            requestAllPermissions();
+        }
+        if (!checkLocationPermission()) {
+            requestLocationPermissions();
+        }
+
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 // selected item
@@ -181,15 +192,14 @@ public class MainActivity extends Activity implements DotScannerCallback {
     }
 
     // Check if the permissions are already granted
-    private boolean checkPermissions() {
-        return checkAudioPermission() && checkLocationPermission();
-    }
-
     private boolean checkLocationPermission() {
         boolean hasFineLocationPermission = (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED);
         boolean hasBackgroundLocationPermission = (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED);
-        Log.e("LOCATION", "Location and Background permission: " + hasFineLocationPermission + " " + hasBackgroundLocationPermission);
         return hasFineLocationPermission && hasBackgroundLocationPermission;
+    }
+
+    private boolean checkBackgroundLocationPermission() {
+        return (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED);
     }
 
     private boolean checkAudioPermission() {
@@ -197,7 +207,32 @@ public class MainActivity extends Activity implements DotScannerCallback {
     }
 
     private boolean checkBluetoothPermission() {
-        return (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED);
+        return (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED);
+    }
+
+    private boolean checkBluetoothAndPermission(){
+        boolean isBluetoothEnabled=false;
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.S) {
+        isBluetoothEnabled=(checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)==PackageManager.PERMISSION_GRANTED);
+        }
+        else isBluetoothEnabled=Utils.isBluetoothAdapterEnabled(this);
+        boolean isPermissionGranted= Utils.isLocationPermissionGranted(this);
+        if(isBluetoothEnabled){
+            if(!isPermissionGranted) Utils.requestLocationPermission(this, PERMISSIONS_REQUEST_CODE);
+        }
+        else {
+            if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.S){
+                requestBluetoothPermissions();
+                Log.i(TAG,"requestBluetoothPermissions()");
+            }
+            else {
+                Utils.requestEnableBluetooth(this,1001);
+                Log.i(TAG,"requestEnableBluetooth()");
+            }
+        }
+        boolean status = isBluetoothEnabled && isPermissionGranted;
+        Log.i(TAG,"checkBluetoothAndPermission() "+isBluetoothEnabled+" "+isPermissionGranted);
+        return status;
     }
 
     private void requestAllPermissions() {
@@ -205,9 +240,46 @@ public class MainActivity extends Activity implements DotScannerCallback {
         ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
     }
 
+    private void requestBluetoothPermissions() {
+        String[] permissions = new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT};
+        ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
+    }
+
+    private void requestBluetoothScanPermissions() {
+        String[] permissions = new String[]{Manifest.permission.BLUETOOTH_CONNECT};
+        ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
+    }
+
+    private void requestLocationPermissions() {
+        String[] permissions;
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+            permissions = new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION};
+        else {
+            permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION};
+        }
+        String s = "";
+        for (String p : permissions)
+            s += p + " ";
+        Log.e(TAG, "Requesting " + s);
+        ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
+    }
+
+    private void requestBackgroundLocationPermission() {
+        String[] permissions = new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION};
+        ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        String p = "";
+        for (String s : permissions) {
+            p += s + " ";
+        }
+        for (Integer s : grantResults) {
+            p += s + " ";
+        }
+        Log.e(TAG, Integer.toString(requestCode) + " " + p);
         if (requestCode == PERMISSIONS_REQUEST_CODE) {
             for (int ii = 0; ii < permissions.length; ii++) {
                 if (permissions[ii].equals(Manifest.permission.RECORD_AUDIO))
@@ -215,9 +287,13 @@ public class MainActivity extends Activity implements DotScannerCallback {
                 if (permissions[ii].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
                     Log.w("PermissionResult", Manifest.permission.ACCESS_FINE_LOCATION);
                     locationPermission = (grantResults[ii] == PackageManager.PERMISSION_GRANTED);
+                    if (!checkBackgroundLocationPermission()) {
+                        requestBackgroundLocationPermission();
+                    }
                 }
             }
         }
+        checkAvailableSensors();
     }
 
     @Override
@@ -291,6 +367,12 @@ public class MainActivity extends Activity implements DotScannerCallback {
     }
 
     void TriggerScan() {
+        if (!checkBluetoothAndPermission()) {
+            Toast.makeText(this, "Missing bluetooth permission!", Toast.LENGTH_SHORT).show();
+            //requestBluetoothScanPermissions();
+            //requestBluetoothPermissions();
+            return;
+        }
         Button scan = findViewById(R.id.btnScan);
         if (isScanning) {
             Log.e(TAG, "Stopping scan");
@@ -300,14 +382,14 @@ public class MainActivity extends Activity implements DotScannerCallback {
         } else {
             Log.e(TAG, "Starting scan");
             scan.setText("Stop Scan");
-            for (MovellaBridge device : mDevices.values()) {
+            for (MovellaBridge device : mConnectedDevices.values()) {
                 if (device.getDevice() != null) {
                     SensorName.remove(device.getDisplayName());
                     device.getDevice().disconnect();
                 }
             }
             adapter.notifyDataSetChanged();
-            mDevices.clear();
+            mConnectedDevices.clear();
 
             mXsScanner.startScan();
             isScanning = true;
@@ -315,7 +397,7 @@ public class MainActivity extends Activity implements DotScannerCallback {
     }
 
     public void onInitDone(MovellaBridge device) {
-        mDevices.put(device.getDevice().getAddress(), device);
+        mConnectedDevices.put(device.getDevice().getAddress(), device);
         if (!SensorName.contains(device.getDisplayName())) {
             SensorName.add(device.getDisplayName());
             adapter.notifyDataSetChanged();
@@ -329,9 +411,12 @@ public class MainActivity extends Activity implements DotScannerCallback {
             @Override
             public void onClick(View v) {
                 if (!isRunning) {
-                    for (MovellaBridge device : mDevices.values()) {
+                    if (!checkLocationPermission())
+                        requestLocationPermissions();
+                    for (MovellaBridge device : mConnectedDevices.values()) {
                         if (selectedItems.contains(device.getDisplayName())) {
-                            Log.e(TAG,"Starting movella device "+device.getDisplayName());
+                            mActiveDevices.put(device.getDevice().getAddress(), device);
+                            Log.e(TAG, "Starting movella device " + device.getDisplayName());
                             device.Start();
                         }
                     }
@@ -361,10 +446,8 @@ public class MainActivity extends Activity implements DotScannerCallback {
             @Override
             public void onClick(View v) {
                 if (isRunning) {
-                    for (MovellaBridge device : mDevices.values()) {
-                        if (selectedItems.contains(device.getDisplayName())) {
-                            device.Stop();
-                        }
+                    for (MovellaBridge device : mActiveDevices.values()) {
+                        device.Stop();
                     }
                     stopService(LSLIntent);
                 }
@@ -395,7 +478,7 @@ public class MainActivity extends Activity implements DotScannerCallback {
         if (checkLocationPermission())
             SensorName.add("Location");
         adapter.notifyDataSetChanged();
-        TriggerScan();
+        //TriggerScan();
         Handler handler = new Handler(Looper.getMainLooper());
         handler.postDelayed(new Runnable() {
             @Override
