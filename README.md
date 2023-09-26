@@ -4,8 +4,8 @@
 
 SENDA(Sensor Data Streamer) is an android application to stream real time sensor reading using LSL (Lab Streaming Layer). Along with the sensors it streams real time audio as well. This is a fork from the original author's Git [Ali Ayub Khan's SENDA](https://github.com/AliAyub007/SENDA), which contains additional features and support for Samsung phones.
 
-## Original Description of the App
-Following sensors are included: 
+## Features 
+The following sensors are included: 
 - Accelerometer
 - Light
 - Proximity
@@ -13,6 +13,24 @@ Following sensors are included:
 - Linear Acceleration
 - Rotation Vector
 - Step Count
+- Location
+- Movella DOT (via Bluetooth)
+
+## Data formats
+
+### Location
+The location stream includes four channels which contain, in this order:
+- Latitude
+- Longitude
+- Elevation
+- Delta (in meters)
+
+### Movella sensors
+All Movella DOT sensors are set to the EULER_COMPLETE measurement mode at the start of the measurement and stream free acceleration and Euler angles at a nominal sampling rate of 60 Hz. The stream contains 6 channels:
+- Free acceleration (3 channels)
+- Euler angles (3 channels)
+
+For details about the data format and the orientation of the axes, see the Movella user manual.
 
 ## Getting Started
 #### Development:
@@ -21,9 +39,7 @@ In order to start with development you need to follow these steps:
 
 - Clone this repository
 - Open project with Android Studio
-- update Gradle tools to newst version, then update and sync the project
 
-If you get errors related to native, built in functions such as fgetpos and fsetpos in cstdio, this problem arises beacuse of the version of the ndk that you are using. Follow this link https://developer.android.com/ndk/downloads/older_releases.html to download Revision 14b. Now to update the ndk in android studio go to File -> Project Structure -> SDK Location -> Android NDK location and set the path to point at android-ndk-r14b.
 
 #### Usage: 
 
@@ -35,6 +51,7 @@ In newer Android versions, it might be useful to prevent Android from saving bat
 
 * [Android Studio](https://developer.android.com/studio/) - Android development framework
 * [LSL ](https://github.com/sccn/labstreaminglayer) - Lab Streaming Layer library
+* [Google MediaPipe ](https://developers.google.com/mediapipe) Google MediaPipe library
 
 ## Contributing
 
