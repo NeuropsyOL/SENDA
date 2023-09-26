@@ -121,7 +121,7 @@ public class MovellaBridge implements DotDeviceCallback {
 
     @Override
     public void onDotInitDone(String s) {
-        Log.e(TAG, "Movella initialized " + s + " " + mDevice.getTag() + " " + mDevice.getSerialNumber() + "!");
+        Log.i(TAG, "Movella initialized " + s + " " + mDevice.getTag() + " " + mDevice.getSerialNumber() + "!");
         mHost.onInitDone(this);
         mDataStreamInfo = new LSL.StreamInfo(getDisplayName(), "misc", 6, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT);
         mMarkerStreamInfo = new LSL.StreamInfo(getDisplayName() + " Marker", "Markers", 1, LSL.IRREGULAR_RATE, LSL.ChannelFormat.string, Build.FINGERPRINT);
@@ -131,7 +131,7 @@ public class MovellaBridge implements DotDeviceCallback {
     public void onDotButtonClicked(String s, long l) {
         String[] sample = new String[1];
         sample[0]=mDevice.getTag();
-        Log.e(TAG,"Button pressed!");
+        Log.i(TAG,getDisplayName()+" button pressed!");
         if(mMarkerStreamOutlet!=null)
             mMarkerStreamOutlet.push_sample(sample);
     }
