@@ -1,7 +1,5 @@
 package de.uol.neuropsy.senda;
 
-import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -23,14 +21,12 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
-import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -109,11 +105,15 @@ public class MainActivity extends Activity implements DotScannerCallback {
     @Override
     protected void onStop() {
         super.onStop();
+        Log.e(TAG, "MainActivity::OnStop()");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.e(TAG, "MainActivity::OnDestroy()");
+        for (MovellaBridge device : mActiveDevices.values())
+            device.Stop();
     }
 
     public MainActivity() {

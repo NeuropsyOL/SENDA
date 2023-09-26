@@ -48,7 +48,7 @@ public class LSLService extends Service {
 
     private AudioBridge mAudioBridge = null;
 
-    private AudioClassifierHelper mAudioClassifier=null;
+    private AudioClassifierHelper mAudioClassifier = null;
 
     public LSLService() {
         super();

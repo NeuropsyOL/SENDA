@@ -175,10 +175,15 @@ class AudioClassifierHelper(
         audioClassifier?.close()
         audioClassifier = null
         recorder?.stop()
+        mStreamOutlet.close()
     }
 
     fun isClosed(): Boolean {
         return audioClassifier == null
+    }
+
+    protected fun finalize() {
+        stopAudioClassification()
     }
 
     private fun streamAudioResultListener(resultListener: AudioClassifierResult) {

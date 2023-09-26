@@ -96,4 +96,14 @@ public class AudioBridge {
             }
         }
     }
+
+    @Override
+    protected void finalize() {
+        if (null != recorder) {
+            try {
+                Stop();
+            } catch (RuntimeException ex) {
+            }
+        }
+    }
 }
