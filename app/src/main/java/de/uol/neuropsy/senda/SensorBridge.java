@@ -40,8 +40,6 @@ public class SensorBridge implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        //if (mStreamOutlet.info().channel_count() != sensorEvent.values.length)
-        //    throw new RuntimeException(mStreamOutlet.info().name() + ": Expected sensor channel count of " + mStreamOutlet.info().channel_count() + ". Got: " + sensorEvent.values.length);
         mStreamOutlet.push_chunk(sensorEvent.values);
     }
 

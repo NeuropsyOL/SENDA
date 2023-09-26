@@ -13,7 +13,7 @@ import java.io.IOException;
 import edu.ucsd.sccn.LSL;
 
 public class AudioBridge {
-    static String TAG=AudioBridge.class.getSimpleName();
+    static String TAG = AudioBridge.class.getSimpleName();
     //LSL Outlets
     Boolean checkFlag = false;
     Thread mAudioThread;
@@ -64,7 +64,7 @@ public class AudioBridge {
                 }
                 while (!checkFlag) {
                     recorder.startRecording();
-                    recorder.read(audio_buffer,0,audio_buffer.length,AudioRecord.READ_BLOCKING);
+                    recorder.read(audio_buffer, 0, audio_buffer.length, AudioRecord.READ_BLOCKING);
                     audioOutlet.push_chunk(audio_buffer);
                 }
             }
@@ -76,16 +76,16 @@ public class AudioBridge {
     }
 
     public void Stop() {
-        Log.e(TAG,"Stopping audio bridge");
+        Log.e(TAG, "Stopping audio bridge");
         checkFlag = true;
         try {
             mAudioThread.join();
-        } catch(InterruptedException e){
+        } catch (InterruptedException e) {
 
         }
         audioOutlet.close();
         audio.destroy();
-        audio=null;
+        audio = null;
 
         if (null != recorder) {
             try {

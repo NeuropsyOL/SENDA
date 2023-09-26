@@ -222,7 +222,7 @@ public class LSLService extends Service {
         if (mAudioBridge != null) {
             mAudioBridge.Stop();
         }
-        if(mAudioClassifier!= null)
+        if (mAudioClassifier != null)
             mAudioClassifier.stopAudioClassification();
     }
 }

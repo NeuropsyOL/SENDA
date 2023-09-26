@@ -116,7 +116,9 @@ public class MovellaBridge implements DotDeviceCallback {
         }
         if (mDataStreamOutlet != null) {
             mDataStreamOutlet.push_sample(data);
-        } else Log.e(TAG, getDisplayName() + " mStreamOutlet is Null!");
+        } else {
+            Log.e(TAG, getDisplayName() + " mStreamOutlet is Null!");
+        }
     }
 
     @Override
