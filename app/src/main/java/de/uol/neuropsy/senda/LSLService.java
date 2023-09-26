@@ -132,8 +132,10 @@ public class LSLService extends Service {
             mAudioBridge.Start();
         }
 
-        //if(intent.getBooleanExtra(""))
-        mAudioClassifier = new AudioClassifierHelper(this, AudioClassifierHelper.DISPLAY_THRESHOLD, AudioClassifierHelper.DEFAULT_OVERLAP, 1, RunningMode.AUDIO_STREAM, null);
+        if (intent.getBooleanExtra("Audio classifier", false)) {
+            mAudioClassifier = new AudioClassifierHelper(this, AudioClassifierHelper.DISPLAY_THRESHOLD, AudioClassifierHelper.DEFAULT_OVERLAP, 1, RunningMode.AUDIO_STREAM, null);
+        }
+
         MainActivity.isRunning = true;
 
         // This service is killed by the OS if it is not started as background service

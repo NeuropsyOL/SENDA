@@ -388,8 +388,10 @@ public class MainActivity extends Activity implements DotScannerCallback {
             SensorName.add("Rotation Vector");
         if (sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null)
             SensorName.add("Step Count");
-        if (checkAudioPermission())
+        if (checkAudioPermission()) {
             SensorName.add("Audio");
+            SensorName.add("Audio classifier");
+        }
         if (checkLocationPermission())
             SensorName.add("Location");
         adapter.notifyDataSetChanged();
