@@ -86,14 +86,6 @@
                 android:dividerHeight="1dp" />
 
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
- 
-
-        <ListView
-            android:id="@+id/sensors"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:dividerHeight="1dp" />
 
         <ScrollView
             android:layout_width="match_parent"
