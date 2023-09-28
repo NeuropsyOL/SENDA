@@ -1,7 +1,5 @@
 package de.uol.neuropsy.senda;
 
-import static java.lang.Thread.sleep;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -47,7 +45,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import de.uol.neuropsy.senda.utils.Utils;
+import edu.ucsd.sccn.LSL;
 
 
 public class MainActivity extends Activity implements DotScannerCallback {
@@ -62,7 +60,6 @@ public class MainActivity extends Activity implements DotScannerCallback {
     static TextView tv;
 
     static boolean isRunning = false;
-    static boolean checkFlag = false;
 
     List<String> SensorName = new ArrayList<>();
     ArrayAdapter<String> adapter;
