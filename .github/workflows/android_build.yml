@@ -47,10 +47,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
 
-      steps:
+    steps:
       - name: Checkout code
         uses: actions/checkout@v2
-   
 
       - name: Setup JDK
         uses: actions/setup-java@v3
