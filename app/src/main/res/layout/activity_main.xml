@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_lsldemo"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    tools:context="de.uol.neuropsy.senda.MainActivity"
-    tools:layout_editor_absoluteY="25dp">
+                                                   xmlns:app="http://schemas.android.com/apk/res-auto"
+                                                   xmlns:tools="http://schemas.android.com/tools"
+                                                   android:id="@+id/activity_lsldemo"
+                                                   android:layout_width="match_parent"
+                                                   android:layout_height="match_parent"
+                                                   android:paddingLeft="@dimen/activity_horizontal_margin"
+                                                   android:paddingTop="@dimen/activity_vertical_margin"
+                                                   android:paddingRight="@dimen/activity_horizontal_margin"
+                                                   android:paddingBottom="@dimen/activity_vertical_margin"
+                                                   tools:context="de.uol.neuropsy.senda.MainActivity"
+                                                   tools:layout_editor_absoluteY="25dp">
 
     <ImageView
         android:id="@+id/streamingNowBtn"
@@ -44,14 +44,20 @@
         app:layout_constraintTop_toBottomOf="@+id/tv"
         app:layout_constraintVertical_bias="0.31">
 
-        <ListView
-            android:id="@+id/sensors"
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swiperefresh"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="20dp"
-            android:background="@drawable/boundary"
-            android:dividerHeight="1dp" />
+            android:layout_height="match_parent">
 
+            <ListView
+                android:id="@+id/sensors"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/boundary"
+                android:dividerHeight="1dp" />
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -73,7 +79,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.52"
         app:layout_constraintStart_toStartOf="parent"
-        >
+    >
 
         <Button
             android:id="@+id/startLSL"
@@ -97,16 +103,6 @@
             tools:layout_editor_absoluteX="182dp"
             tools:layout_editor_absoluteY="453dp" />
 
-        <Button
-            android:id="@+id/btnScan"
-            android:layout_width="100dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="15dp"
-            android:layout_marginEnd="12dp"
-            android:layout_toStartOf="@+id/stopLSL"
-            android:layout_toEndOf="@+id/startLSL"
-            android:background="@drawable/shape"
-            android:text="Scan" />
     </RelativeLayout>
 
     <TextView
@@ -141,16 +137,16 @@
 
 
 
-<!--    <ImageButton-->
-<!--        android:id="@+id/settings_btn"-->
-<!--        style="?android:attr/borderlessButtonStyle"-->
-<!--        android:layout_width="45dp"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_marginTop="28dp"-->
-<!--        android:background="@drawable/boundary"-->
-<!--        android:src="@drawable/ic_settings"-->
-<!--        app:layout_constraintEnd_toEndOf="parent"-->
-<!--        app:layout_constraintHorizontal_bias="0.063"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        app:layout_constraintTop_toTopOf="parent" />-->
+    <!--    <ImageButton-->
+    <!--        android:id="@+id/settings_btn"-->
+    <!--        style="?android:attr/borderlessButtonStyle"-->
+    <!--        android:layout_width="45dp"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_marginTop="28dp"-->
+    <!--        android:background="@drawable/boundary"-->
+    <!--        android:src="@drawable/ic_settings"-->
+    <!--        app:layout_constraintEnd_toEndOf="parent"-->
+    <!--        app:layout_constraintHorizontal_bias="0.063"-->
+    <!--        app:layout_constraintStart_toStartOf="parent"-->
+    <!--        app:layout_constraintTop_toTopOf="parent" />-->
 </androidx.constraintlayout.widget.ConstraintLayout>

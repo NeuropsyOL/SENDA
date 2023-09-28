@@ -45,6 +45,8 @@ dependencies {
 
     // Mediapipe Library
     implementation 'com.google.mediapipe:tasks-audio:0.10.0'
+
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"
 }
 
 

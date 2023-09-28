@@ -17,10 +17,12 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.View;
@@ -36,6 +38,7 @@ import android.widget.Toast;
 import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.xsens.dot.android.sdk.interfaces.DotScannerCallback;
 import com.xsens.dot.android.sdk.utils.DotScanner;
@@ -81,6 +84,10 @@ public class MainActivity extends Activity implements DotScannerCallback {
     //Create placeholder for user's consent to record_audio and access location permissions.
     //This will be used in handling callback
     private final int PERMISSIONS_REQUEST_CODE = 1;
+
+    //
+    private final int START_SCAN_REQUEST_CODE = 2000;
+    
     public static List<Intent> POWERMANAGER_INTENTS = Arrays.asList(new Intent().setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")), new Intent().setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity")), new Intent().setComponent(new ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity")), new Intent().setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity")), new Intent().setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity")), new Intent().setComponent(new ComponentName("com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity")), new Intent().setComponent(new ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity")), new Intent().setComponent(new ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager")), new Intent().setComponent(new ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity")), new Intent().setComponent(new ComponentName("com.asus.mobilemanager", "com.asus.mobilemanager.entry.FunctionActivity")).setData(android.net.Uri.parse("mobilemanager://function/entry/AutoStart")));
 
     private Intent LSLIntent = null;
@@ -133,6 +140,12 @@ public class MainActivity extends Activity implements DotScannerCallback {
         adapter = new ArrayAdapter<>(getApplicationContext(), R.layout.list_view_text, R.id.streamsSelected, SensorName);
         lv.setAdapter(adapter);
 
+        SwipeRefreshLayout mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
+
+        mSwipeRefreshLayout.setOnRefreshListener(() -> {
+            checkAvailableSensors();
+            StartScan();
+        });
         mXsScanner = new DotScanner(this, this);
         mXsScanner.setScanMode(ScanSettings.SCAN_MODE_BALANCED);
 
@@ -242,14 +255,32 @@ public class MainActivity extends Activity implements DotScannerCallback {
                     }
                 }
                 // All other cases (including background location) set the list item checked if we came from the OnClickListener
-                else if (requestCode >= 1000) {
+                else if (requestCode >= 1000 && requestCode < 2000) {
                     lv.setItemChecked(requestCode - 1000, true);
+                }
+                // We came from StartScan(), commence scan
+                else if (requestCode >= 2000) {
+                    Log.e(TAG, "Coming from StartScan, commencing scan");
+                    StartScan();
                 }
             } else {
                 // Denied permission and should not show rationale -> Permission request is invisible to user, show error message
-                if (!shouldShowRequestPermissionRationale(permissions[ii]))
+                if (!shouldShowRequestPermissionRationale(permissions[ii])) {
                     //TODO Map permissions string to human readable permission
-                    Toast.makeText(this, "Denied " + permissions[ii], Toast.LENGTH_SHORT).show();
+                    try {
+                        Toast.makeText(this,
+                                "Missing permission: " + this.getPackageManager().getPermissionInfo(permissions[ii], 0).loadLabel(this.getPackageManager()),
+                                Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Toast.makeText(this,
+                                "Missing a permission and encountered an error trying to find out which.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    Uri uri = Uri.fromParts("package", getPackageName(), null);
+                    intent.setData(uri);
+                    startActivity(intent);
+                }
             }
         }
     }
@@ -313,34 +344,44 @@ public class MainActivity extends Activity implements DotScannerCallback {
         Log.e(TAG, "Initializing " + bluetoothDevice.getAddress());
     }
 
-    void TriggerScan() {
+    void StartScan() {
+        // TODO trigger scan in permission result callback when we come from here
         if (!checkBluetoothPermission()) {
             Log.i(TAG, "Do not have Bluetooth permission, asking for it");
-            requestBluetoothPermissions(PERMISSIONS_REQUEST_CODE);
+            requestBluetoothPermissions(START_SCAN_REQUEST_CODE);
+            ((SwipeRefreshLayout) findViewById(R.id.swiperefresh)).setRefreshing(false);
             return;
         } else if (!checkAndRequestBluetoothEnabled()) return;
-
-        Button scan = findViewById(R.id.btnScan);
-        if (isScanning) {
-            Log.e(TAG, "Stopping scan");
-            mXsScanner.stopScan();
-            isScanning = false;
-            scan.setText("Start Scan");
-        } else {
-            Log.e(TAG, "Starting scan");
-            scan.setText("Stop Scan");
-            for (MovellaBridge device : mConnectedDevices.values()) {
-                if (device.getDevice() != null) {
-                    SensorName.remove(device.getDisplayName());
-                    device.getDevice().disconnect();
-                }
+        Log.e(TAG, "Starting scan");
+        for (MovellaBridge device : mConnectedDevices.values()) {
+            // Do not disconnect currently active devices
+            if (device.getDevice() != null && isRunning && !mActiveDevices.containsKey(device.getDevice().getAddress())) {
+                SensorName.remove(device.getDisplayName());
+                device.getDevice().disconnect();
             }
-            adapter.notifyDataSetChanged();
-            mConnectedDevices.clear();
-
-            mXsScanner.startScan();
-            isScanning = true;
         }
+        adapter.notifyDataSetChanged();
+        mConnectedDevices.clear();
+        ((SwipeRefreshLayout) findViewById(R.id.swiperefresh)).setRefreshing(true);
+        mXsScanner.startScan();
+        scan_start_time = LSL.local_clock();
+        isScanning = true;
+
+        final Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                StopScan();
+            }
+        }, 5000);
+    }
+
+
+    void StopScan() {
+        Log.e(TAG, "Stopping scan");
+        mXsScanner.stopScan();
+        isScanning = false;
+        ((SwipeRefreshLayout) findViewById(R.id.swiperefresh)).setRefreshing(false);
     }
 
     public void onInitDone(MovellaBridge device) {
@@ -385,10 +426,22 @@ public class MainActivity extends Activity implements DotScannerCallback {
             }
         });
 
-        Button scan = findViewById(R.id.btnScan);
-        scan.setOnClickListener(v -> TriggerScan());
-
         Button stop = (Button) findViewById(R.id.stopLSL);
+        stop.setOnLongClickListener(v -> {
+            if (backButtonCount < 2) {
+                backButtonCount++;
+                return true;
+            }
+            if (isRunning) {
+                for (MovellaBridge device : mActiveDevices.values()) {
+                    device.Stop();
+                }
+                stopService(LSLIntent);
+            }
+            this.finishAffinity();
+            return true;
+        });
+
         stop.setOnClickListener(v -> {
             if (isRunning) {
                 for (MovellaBridge device : mActiveDevices.values()) {
