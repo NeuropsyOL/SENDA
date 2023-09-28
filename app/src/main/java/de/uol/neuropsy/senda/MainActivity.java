@@ -364,7 +364,6 @@ public class MainActivity extends Activity implements DotScannerCallback {
         mConnectedDevices.clear();
         ((SwipeRefreshLayout) findViewById(R.id.swiperefresh)).setRefreshing(true);
         mXsScanner.startScan();
-        scan_start_time = LSL.local_clock();
         isScanning = true;
 
         final Handler handler = new Handler(Looper.getMainLooper());
