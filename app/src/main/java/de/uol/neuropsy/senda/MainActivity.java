@@ -407,7 +407,7 @@ public class MainActivity extends Activity implements DotScannerCallback {
                     }
 
                     for (MovellaBridge device : mConnectedDevices.values()) {
-                        if (selectedItems.contains(device.getDisplayName())) {
+                        if (LSLIntent.getBooleanExtra(device.getDisplayName(),false)) {
                             mActiveDevices.put(device.getDevice().getAddress(), device);
                             Log.e(TAG, "Starting movella device " + device.getDisplayName());
                             device.Start();
