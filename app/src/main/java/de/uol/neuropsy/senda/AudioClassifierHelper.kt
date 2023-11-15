@@ -21,9 +21,9 @@ import android.content.Context
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.os.Build
 import android.os.SystemClock
 import android.util.Log
-//import com.google.mediapipe.examples.audioclassifier.fragment.LibraryFragment
 import com.google.mediapipe.tasks.audio.audioclassifier.AudioClassifier
 import com.google.mediapipe.tasks.audio.audioclassifier.AudioClassifierResult
 import com.google.mediapipe.tasks.audio.core.RunningMode
@@ -46,10 +46,16 @@ class AudioClassifierHelper(
     private var mStreamOutlet = LSL.StreamOutlet(
         LSL.StreamInfo(
             "Audio classifier", "Marker", 1,
-            LSL.IRREGULAR_RATE, LSL.ChannelFormat.string, "localhost"
+            LSL.IRREGULAR_RATE, LSL.ChannelFormat.string, Build.FINGERPRINT
         )
     )
-    private var currentLabel : String = ""
+    private var mAllLabelsOutlet = LSL.StreamOutlet(
+        LSL.StreamInfo(
+            "Audio classifier - all labels", "other", 521,
+            LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT
+        )
+    )
+    private var currentLabel: String = ""
     private var recorder: AudioRecord? = null
     private var executor: ScheduledThreadPoolExecutor? = null
     private var audioClassifier: AudioClassifier? = null
@@ -77,7 +83,6 @@ class AudioClassifierHelper(
                     .setMaxResults(numOfResults)
                     .setBaseOptions(baseOptions)
                     .setRunningMode(runningMode)
-
             if (runningMode == RunningMode.AUDIO_STREAM) {
                 optionsBuilder
                     .setResultListener(this::streamAudioResultListener)
@@ -87,6 +92,7 @@ class AudioClassifierHelper(
             val options = optionsBuilder.build()
 
             // Create the classifier and required supporting objects
+
             audioClassifier =
                 AudioClassifier.createFromOptions(context, options)
             if (runningMode == RunningMode.AUDIO_STREAM) {
@@ -176,6 +182,7 @@ class AudioClassifierHelper(
         audioClassifier = null
         recorder?.stop()
         mStreamOutlet.close()
+        mAllLabelsOutlet.close()
     }
 
     fun isClosed(): Boolean {
@@ -187,7 +194,6 @@ class AudioClassifierHelper(
     }
 
     private fun streamAudioResultListener(resultListener: AudioClassifierResult) {
-        //mStreamOutlet.push_chunk()
         resultListener.classificationResults()?.size?.let {
             val categories =
                 resultListener
@@ -195,12 +201,19 @@ class AudioClassifierHelper(
                     ?.get(0)?.classifications()
                     ?.get(0)
                     ?.categories() ?: emptyList()
-
-            if (categories.size>0 && !categories.first().categoryName().equals(currentLabel)){
+            var scores=FloatArray(521)
+            for(cat in categories)
+                scores[cat.index()]=cat.score()
+            mAllLabelsOutlet.push_chunk(scores)
+            if (categories.size > 0 && !categories.first().categoryName().equals(currentLabel)) {
                 mStreamOutlet.push_chunk(arrayOf(categories.first().categoryName()))
-                Log.e(TAG, "Pushing ${categories.first().categoryName()}")
-                currentLabel=categories.first().categoryName()
+                currentLabel = categories.first().categoryName()
             }
+            if (categories.size == 0) {
+                mStreamOutlet.push_chunk(arrayOf("Unknown"))
+                currentLabel = "Unknown"
+            }
+
         }
         listener?.onResult(
             ResultBundle(listOf(resultListener), 0)
@@ -220,8 +233,8 @@ class AudioClassifierHelper(
 
     companion object {
         private const val TAG = "AudioClassifierHelper"
-        const val DISPLAY_THRESHOLD = 0.3f
-        const val DEFAULT_NUM_OF_RESULTS = 2
+        const val DISPLAY_THRESHOLD = 0.0f
+        const val DEFAULT_NUM_OF_RESULTS = 1
         const val DEFAULT_OVERLAP = 2
         const val YAMNET_MODEL = "yamnet.tflite"
 

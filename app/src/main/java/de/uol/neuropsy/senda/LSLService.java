@@ -133,7 +133,7 @@ public class LSLService extends Service {
         }
 
         if (intent.getBooleanExtra("Audio classifier", false)) {
-            mAudioClassifier = new AudioClassifierHelper(this, AudioClassifierHelper.DISPLAY_THRESHOLD, AudioClassifierHelper.DEFAULT_OVERLAP, 1, RunningMode.AUDIO_STREAM, null);
+            mAudioClassifier = new AudioClassifierHelper(this, AudioClassifierHelper.DISPLAY_THRESHOLD, AudioClassifierHelper.DEFAULT_OVERLAP, AudioClassifierHelper.DEFAULT_NUM_OF_RESULTS, RunningMode.AUDIO_STREAM, null);
         }
 
         MainActivity.isRunning = true;
