@@ -8,6 +8,7 @@ apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion 33
+    namespace "de.uol.neuropsy.senda"
     ndkVersion "25.2.9519653"
     defaultConfig {
         vectorDrawables.useSupportLibrary = true
@@ -37,14 +38,14 @@ dependencies {
     implementation files('libs/MovellaDotSdkCore_ANDROID_v2023.6.0_STABLE_RELEASE.aar')
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
-    implementation 'androidx.annotation:annotation:1.1.0'
-    implementation 'com.google.android.gms:play-services:12.0.1'
+    implementation 'androidx.annotation:annotation:1.7.0'
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
     // Mediapipe Library
-    implementation 'com.google.mediapipe:tasks-audio:0.10.0'
+    implementation 'com.google.mediapipe:tasks-audio:0.20230731'
 
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"
 }
