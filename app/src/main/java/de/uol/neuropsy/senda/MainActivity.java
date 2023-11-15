@@ -199,7 +199,10 @@ public class MainActivity extends Activity implements DotScannerCallback {
     }
 
     private boolean checkBluetoothPermission() {
-        return (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            return (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED);
+        else
+            return true;
     }
 
     private void requestAudioPermissions(int requestCode) {
@@ -208,8 +211,10 @@ public class MainActivity extends Activity implements DotScannerCallback {
     }
 
     private void requestBluetoothPermissions(int requestCode) {
-        String[] permissions = new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT};
-        ActivityCompat.requestPermissions(this, permissions, requestCode);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            String[] permissions = new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT};
+            ActivityCompat.requestPermissions(this, permissions, requestCode);
+        }
     }
 
     private boolean checkAndRequestBluetoothEnabled() {
@@ -275,6 +280,7 @@ public class MainActivity extends Activity implements DotScannerCallback {
                         Toast.makeText(this,
                                 "Missing a permission and encountered an error trying to find out which.",
                                 Toast.LENGTH_SHORT).show();
+                        Log.e(TAG,"Missing a permission and encountered an error trying to find out which:" + e.toString());
                     }
                     Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                     Uri uri = Uri.fromParts("package", getPackageName(), null);
