@@ -294,10 +294,19 @@ public class MainActivity extends Activity implements DotScannerCallback {
     @Override
     public void onBackPressed() {
         if (backButtonCount >= 1) {
-            Intent intent = new Intent(Intent.ACTION_MAIN);
-            intent.addCategory(Intent.CATEGORY_HOME);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
+            if (isRunning) {
+                for (MovellaBridge device : mActiveDevices.values()) {
+                    device.Stop();
+                }
+                stopService(LSLIntent);
+            }
+            for (MovellaBridge device : mConnectedDevices.values()) {
+                SensorName.remove(device.getDisplayName());
+                device.getDevice().disconnect();
+                mConnectedDevices.remove(device);
+                adapter.notifyDataSetChanged();
+            }
+            this.finishAffinity();
             backButtonCount = 0;
         } else {
             Toast.makeText(this, "Press the back button once again to close the application.", Toast.LENGTH_SHORT).show();
@@ -437,13 +446,7 @@ public class MainActivity extends Activity implements DotScannerCallback {
                 backButtonCount++;
                 return true;
             }
-            if (isRunning) {
-                for (MovellaBridge device : mActiveDevices.values()) {
-                    device.Stop();
-                }
-                stopService(LSLIntent);
-            }
-            this.finishAffinity();
+
             return true;
         });
 
