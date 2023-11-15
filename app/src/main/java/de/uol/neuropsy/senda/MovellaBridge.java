@@ -31,15 +31,12 @@ public class MovellaBridge implements DotDeviceCallback {
         mContext = context;
         mDevice = new DotDevice(mContext, btDevice, this);
         mDevice.connect();
-        Log.e(TAG, "Waiting for connection to " + btDevice.getAddress() + "...");
     }
 
     public DotDevice getDevice() {
         if (!mDevice.isInitDone()) {
-            Log.e(TAG, mDevice.getAddress() + " waiting for init to be done...");
             return null;
         }
-
         return mDevice;
     }
 
@@ -68,7 +65,7 @@ public class MovellaBridge implements DotDeviceCallback {
         assert mDataStreamOutlet != null;
         mDevice.setMeasurementMode(DotPayload.PAYLOAD_TYPE_COMPLETE_EULER);
         mDevice.startMeasuring();
-        Log.e(TAG, getDisplayName() + " StartMeasuring");
+        Log.i(TAG, getDisplayName() + " StartMeasuring");
     }
 
     void Stop() {
@@ -112,6 +109,7 @@ public class MovellaBridge implements DotDeviceCallback {
     @Override
     public void onDotDataChanged(String s, DotData dotData) {
         float[] data = new float[6];
+
         for (int i = 0; i < 3; i++) {
             data[i] = dotData.getFreeAcc()[i];
             data[i + 3] = (float) dotData.getEuler()[i];

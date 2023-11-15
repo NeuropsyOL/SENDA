@@ -53,20 +53,16 @@ public class LocationBridge {
                     if (location != null) {
                         double[] loc = {location.getLatitude(), location.getLongitude(), location.getAltitude(),location.getAccuracy()};
                         mStreamOutlet.push_sample(loc);
-                        Log.i("LocationBridge", location.getLatitude() +" "+
-                                location.getLongitude());
                     }
                 }
             }
         };
     }
     void Start() {
-        Log.i("LocationBridge","Start()");
         mlocationProviderClient.requestLocationUpdates(mlocationRequest, mlocationCallback, null);
     }
 
     void Stop() {
-        Log.i("LocationBridge","Stop()");
         mlocationProviderClient.removeLocationUpdates(mlocationCallback);
         mStreamOutlet.close();
     }
