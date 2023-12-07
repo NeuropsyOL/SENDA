@@ -3,10 +3,10 @@
     package="de.uol.neuropsy.senda">
     <!-- Request legacy Bluetooth permissions on older devices. -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <!-- Needed to scan for new Bluetooth devices. -->
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"/>
-    <!-- Connect to paired Bluetooth devices -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" /> <!-- Needed to scan for new Bluetooth devices. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" /> <!-- Connect to paired Bluetooth devices -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -24,9 +24,11 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
         <activity
-            android:name="de.uol.neuropsy.senda.SplashScreenActivity"
+            android:name=".MainActivity"
             android:exported="true"
+            android:label="SENDA"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -34,27 +36,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name="de.uol.neuropsy.senda.MainActivity"
-            android:exported="true"
-            android:label="SENDA"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name="de.uol.neuropsy.senda.SettingsActivity"
-            android:exported="true"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar" />
-
         <service
-            android:name="de.uol.neuropsy.senda.LSLService"
+            android:name=".LSLService"
             android:foregroundServiceType="camera|location|microphone" />
 
         <uses-library android:name="android.test.runner" />
-        <!-- Does not work w/ android.test.base on my Z1-3 test device
-        <uses-library android:name="android.test.base" />
-        <uses-library android:name="android.test.mock" />
-        -->
     </application>
 
 </manifest>

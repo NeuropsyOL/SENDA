@@ -7,7 +7,7 @@ apply plugin: 'kotlin-android'
 //apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 33
+    compileSdk 33
     namespace "de.uol.neuropsy.senda"
     ndkVersion "25.2.9519653"
     defaultConfig {
@@ -15,23 +15,31 @@ android {
         applicationId "de.uol.neuropsy.senda"
         minSdkVersion 26
         targetSdkVersion 31
-        versionCode 107
-        versionName "1.0.7"
+        versionCode 108
+        versionName "1.1"
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            versionNameSuffix="-debug"
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
     }
 }
 
@@ -44,6 +52,7 @@ apply from:'download_model.gradle'
 dependencies {
     implementation project(':liblsl-Java')
     implementation files('libs/MovellaDotSdkCore_ANDROID_v2023.6.0_STABLE_RELEASE.aar')
+    implementation("androidx.viewpager2:viewpager2:1.0.0")
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
     implementation 'androidx.annotation:annotation:1.7.0'
