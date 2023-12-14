@@ -428,7 +428,7 @@ public class MainActivity extends Activity implements DotScannerCallback {
                             device.Start();
                         }
                     }
-
+                    lv.setEnabled(false);
                     // make this a foreground service so that android does not kill it while it is in the background
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         myStartForegroundService(LSLIntent);
@@ -456,6 +456,7 @@ public class MainActivity extends Activity implements DotScannerCallback {
                     device.Stop();
                 }
                 stopService(LSLIntent);
+                lv.setEnabled(true);
             }
         });
     }
