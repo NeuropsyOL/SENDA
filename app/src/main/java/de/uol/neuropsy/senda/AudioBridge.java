@@ -92,6 +92,7 @@ public class AudioBridge {
                 recorder.stop();
                 recorder.release();
             } catch (RuntimeException ex) {
+                Log.e("AudioBridge","Error while stopping audio recording: "+ex.toString());
                 recorder.release();
             }
         }
@@ -99,11 +100,5 @@ public class AudioBridge {
 
     @Override
     protected void finalize() {
-        if (null != recorder) {
-            try {
-                Stop();
-            } catch (RuntimeException ex) {
-            }
-        }
     }
 }

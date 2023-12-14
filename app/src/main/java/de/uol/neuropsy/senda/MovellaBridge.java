@@ -140,7 +140,6 @@ public class MovellaBridge implements DotDeviceCallback {
 
     @Override
     protected void finalize() {
-       Stop();
     }
 
     @Override

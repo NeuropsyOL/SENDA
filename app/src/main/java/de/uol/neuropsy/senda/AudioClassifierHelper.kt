@@ -177,6 +177,9 @@ class AudioClassifierHelper(
     }
 
     fun stopAudioClassification() {
+        if(isClosed()) {
+            Log.e(TAG,"Trying to stop audio classification, but audio classification is not running!")
+        }
         executor?.shutdownNow()
         audioClassifier?.close()
         audioClassifier = null
@@ -190,7 +193,6 @@ class AudioClassifierHelper(
     }
 
     protected fun finalize() {
-        stopAudioClassification()
     }
 
     private fun streamAudioResultListener(resultListener: AudioClassifierResult) {

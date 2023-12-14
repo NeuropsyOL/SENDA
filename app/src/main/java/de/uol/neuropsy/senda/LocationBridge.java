@@ -1,5 +1,6 @@
 package de.uol.neuropsy.senda;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.location.Location;
 import android.os.Build;
@@ -58,6 +59,7 @@ public class LocationBridge {
             }
         };
     }
+    @SuppressLint("MissingPermissions")
     void Start() {
         mlocationProviderClient.requestLocationUpdates(mlocationRequest, mlocationCallback, null);
     }
@@ -69,10 +71,5 @@ public class LocationBridge {
 
     @Override
     protected void finalize() {
-        try {
-            Stop();
-        } catch (Exception e) {
-            Log.e(TAG,e.toString());
-        }
     }
 }
