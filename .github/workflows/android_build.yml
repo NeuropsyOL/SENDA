@@ -5,12 +5,11 @@ on:
     branches:
       - master  # Change this to your main branch name (e.g., master)
       - development
-
 jobs:
   build-debug:
+    name: Build debug
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/development'
-
+    if: github.ref =='refs/heads/development'
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -19,7 +18,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: '11'  # Change this to the required Java version for your Android project
+          java-version: '17'
 
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
@@ -29,24 +28,24 @@ jobs:
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1.2.0
         with:
-          ndk-version: r14b
+          ndk-version: r25c
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build APK
-        run: ./gradlew assembleDebug  # Change 'assembleDebug' to 'assembleRelease' if you want a release build
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v2
         with:
-          name: SENDA-development  # Change this to your desired artifact name
-          path: app/build/outputs/apk/debug/app-debug.apk  # Change the path to the location of your APK file
+          name: SENDA-debug  # Change this to your desired artifact name
+          path: ./app/build/outputs/apk/debug/*.apk
 
-  build-release:
+  build-master:
+    name: Build master
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -55,7 +54,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: '11'  # Change this to the required Java version for your Android project
+          java-version: '17'  # Change this to the required Java version for your Android project
 
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
@@ -65,16 +64,28 @@ jobs:
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1.2.0
         with:
-          ndk-version: r14b
+          ndk-version: r25c
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build APK
-        run: ./gradlew assembleRelease  # Change 'assembleDebug' to 'assembleRelease' if you want a release build
+      - name: Build debug APK
+        run: ./gradlew assembleRelease
+
+      - name: Sign app APK
+        uses: r0adkll/sign-android-release@v1
+        # ID used to access action output
+        id: sign_app
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.SIGNING_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v2
         with:
-          name: SENDA-master  # Change this to your desired artifact name
-          path: app/build/outputs/apk/release/app-release-unsigned.apk  # Change the path to the location of your APK file
+          name: SENDA-release  # Change this to your desired artifact name
+          path: ${{steps.sign_app.outputs.signedReleaseFile}}  # Change the path to the location of your APK file
+
