@@ -327,8 +327,8 @@ public class LSL {
          * @param max_buffered Optionally the maximum amount of data to buffer (in seconds if there is a nominal
          *                     sampling rate, otherwise x100 in samples). The default is 6 minutes of data.
          */
-        public StreamOutlet(StreamInfo info, int chunk_size, int max_buffered) throws IOException { obj = inst.lsl_create_outlet(info.handle(), chunk_size, max_buffered); throw new IOException("Unable to open LSL outlet.");}
-        public StreamOutlet(StreamInfo info, int chunk_size) throws IOException { obj = inst.lsl_create_outlet(info.handle(), chunk_size, 360); throw new IOException("Unable to open LSL outlet.");}
+        public StreamOutlet(StreamInfo info, int chunk_size, int max_buffered) throws IOException { obj = inst.lsl_create_outlet(info.handle(), chunk_size, max_buffered); if(obj == null) throw new IOException("Unable to open LSL outlet.");}
+        public StreamOutlet(StreamInfo info, int chunk_size) throws IOException { obj = inst.lsl_create_outlet(info.handle(), chunk_size, 360); if(obj == null) throw new IOException("Unable to open LSL outlet.");}
         public StreamOutlet(StreamInfo info) throws IOException { obj = inst.lsl_create_outlet(info.handle(), 0, 360); if(obj == null) throw new IOException("Unable to open LSL outlet."); }
 
         /**
