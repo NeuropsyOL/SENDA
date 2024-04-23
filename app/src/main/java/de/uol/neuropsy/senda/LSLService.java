@@ -16,6 +16,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -60,6 +61,8 @@ public class LSLService extends Service {
     //Wake Lock
     PowerManager.WakeLock wakelock;
 
+    WifiManager.MulticastLock multicastLock;
+
     //Animation for Streaming
     Animation animation = new AlphaAnimation((float) 0.5, 0);
 
@@ -70,6 +73,11 @@ public class LSLService extends Service {
         assert pm != null;
         wakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getClass().getCanonicalName());
         wakelock.acquire();
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (wifiManager != null) {
+            multicastLock = wifiManager.createMulticastLock("Log_Tag");
+            multicastLock.acquire();
+        }
     }
 
     @Override
@@ -207,7 +215,7 @@ public class LSLService extends Service {
         streamingNowBtn.clearAnimation();
         streamingNow.clearAnimation();
         wakelock.release();
-
+        multicastLock.release();
         //Unregister all sensor listeners
         SensorManager msensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         assert msensorManager != null;
