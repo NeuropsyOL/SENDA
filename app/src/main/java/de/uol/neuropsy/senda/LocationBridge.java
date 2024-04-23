@@ -12,6 +12,7 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 
 import java.io.IOException;
 import java.util.Random;
@@ -31,7 +32,7 @@ public class LocationBridge {
 
     LocationBridge(Context context) {
         LSL.StreamInfo mStreamInfo = new LSL.StreamInfo("Location" + " " + Build.MODEL,
-                "eeg", 4, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT);
+                "other", 4, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT);
         try {
             mStreamOutlet = new LSL.StreamOutlet(mStreamInfo);
         } catch (IOException e) {
@@ -41,10 +42,7 @@ public class LocationBridge {
         if(context==null)
            Log.e("LocationBridge","Context is null!");
         mlocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
-        mlocationRequest = LocationRequest.create();
-        mlocationRequest.setInterval(1000);
-        mlocationRequest.setFastestInterval(500);
-        mlocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mlocationRequest = new LocationRequest.Builder(1000).setPriority(Priority.PRIORITY_HIGH_ACCURACY).build();
         mlocationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
