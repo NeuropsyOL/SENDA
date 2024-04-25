@@ -26,12 +26,16 @@ import android.provider.Settings;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.View;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,17 +45,20 @@ import androidx.core.content.ContextCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.xsens.dot.android.sdk.interfaces.DotScannerCallback;
+import com.xsens.dot.android.sdk.interfaces.DotSyncCallback;
+import com.xsens.dot.android.sdk.models.DotDevice;
+import com.xsens.dot.android.sdk.models.DotSyncManager;
 import com.xsens.dot.android.sdk.utils.DotScanner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import edu.ucsd.sccn.LSL;
+import com.xsens.dot.android.sdk.DotSdk;
 
-
-public class MainActivity extends Activity implements DotScannerCallback {
+public class MainActivity extends Activity implements DotScannerCallback, DotSyncCallback {
 
     private Boolean isScanning = false;
     private DotScanner mXsScanner;
@@ -75,6 +82,8 @@ public class MainActivity extends Activity implements DotScannerCallback {
     @SuppressLint("StaticFieldLeak")
     static TextView streamingNow;
 
+    ProgressBar progressBar;
+
     int backButtonCount = 0;
 
     //Settings button
@@ -87,7 +96,7 @@ public class MainActivity extends Activity implements DotScannerCallback {
 
     //
     private final int START_SCAN_REQUEST_CODE = 2000;
-    
+
     public static List<Intent> POWERMANAGER_INTENTS = Arrays.asList(new Intent().setComponent(new ComponentName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")), new Intent().setComponent(new ComponentName("com.letv.android.letvsafe", "com.letv.android.letvsafe.AutobootManageActivity")), new Intent().setComponent(new ComponentName("com.huawei.systemmanager", "com.huawei.systemmanager.optimize.process.ProtectActivity")), new Intent().setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity")), new Intent().setComponent(new ComponentName("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity")), new Intent().setComponent(new ComponentName("com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity")), new Intent().setComponent(new ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity")), new Intent().setComponent(new ComponentName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager")), new Intent().setComponent(new ComponentName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity")), new Intent().setComponent(new ComponentName("com.asus.mobilemanager", "com.asus.mobilemanager.entry.FunctionActivity")).setData(android.net.Uri.parse("mobilemanager://function/entry/AutoStart")));
 
     private Intent LSLIntent = null;
@@ -117,13 +126,27 @@ public class MainActivity extends Activity implements DotScannerCallback {
     }
 
     /**
+     * Setup for Xsens DOT SDK.
+     */
+    private void initDotSdk() {
+        // Get the version name of SDK.
+        String version = DotSdk.getSdkVersion();
+        Log.i(TAG, "initDotSdk() - version: $version");
+        // Enable this feature to monitor logs from SDK.
+        DotSdk.setDebugEnabled(false);
+        // Enable this feature then SDK will start reconnection when the connection is lost.
+        DotSdk.setReconnectEnabled(true);
+    }
+
+
+    /**
      * Called when the activity is first created.
      */
     @SuppressLint("SetTextI18n")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        initDotSdk();
         setContentView(R.layout.activity_main);
         tv = (TextView) findViewById(R.id.tv);
 
@@ -132,6 +155,7 @@ public class MainActivity extends Activity implements DotScannerCallback {
         streamingNow = (TextView) findViewById(R.id.streamingNow);
         streamingNowBtn = (ImageView) findViewById(R.id.streamingNowBtn);
 
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
         startPowerSaverIntent(this);
 
         tv.setText("Available Streams: ");
@@ -199,10 +223,9 @@ public class MainActivity extends Activity implements DotScannerCallback {
     }
 
     private boolean checkBluetoothPermission() {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
             return (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED);
-        else
-            return true;
+        else return true;
     }
 
     private void requestAudioPermissions(int requestCode) {
@@ -273,14 +296,10 @@ public class MainActivity extends Activity implements DotScannerCallback {
                 if (!shouldShowRequestPermissionRationale(permissions[ii])) {
                     //TODO Map permissions string to human readable permission
                     try {
-                        Toast.makeText(this,
-                                "Missing permission: " + this.getPackageManager().getPermissionInfo(permissions[ii], 0).loadLabel(this.getPackageManager()),
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Missing permission: " + this.getPackageManager().getPermissionInfo(permissions[ii], 0).loadLabel(this.getPackageManager()), Toast.LENGTH_SHORT).show();
                     } catch (Exception e) {
-                        Toast.makeText(this,
-                                "Missing a permission and encountered an error trying to find out which.",
-                                Toast.LENGTH_SHORT).show();
-                        Log.e(TAG,"Missing a permission and encountered an error trying to find out which:" + e.toString());
+                        Toast.makeText(this, "Missing a permission and encountered an error trying to find out which.", Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "Missing a permission and encountered an error trying to find out which:" + e.toString());
                     }
                     Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                     Uri uri = Uri.fromParts("package", getPackageName(), null);
@@ -409,36 +428,10 @@ public class MainActivity extends Activity implements DotScannerCallback {
     void bindButtons() {
         LSLIntent = new Intent(this, LSLService.class);
         Button start = (Button) findViewById(R.id.startLSL);
-        start.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!isRunning) {
-
-                    // Build the list of selected items and give it over to the LSLIntent
-                    SparseBooleanArray checked = lv.getCheckedItemPositions();
-                    for (int i = 0; i < lv.getAdapter().getCount(); i++) {
-                        Log.e(TAG, lv.getItemAtPosition(i).toString() + " " + checked.get(i));
-                        LSLIntent.putExtra(lv.getItemAtPosition(i).toString(), checked.get(i));
-                    }
-
-                    for (MovellaBridge device : mConnectedDevices.values()) {
-                        if (LSLIntent.getBooleanExtra(device.getDisplayName(),false)) {
-                            mActiveDevices.put(device.getDevice().getAddress(), device);
-                            Log.e(TAG, "Starting movella device " + device.getDisplayName());
-                            device.Start();
-                        }
-                    }
-                    lv.setEnabled(false);
-                    lv.setAlpha(0.1f);
-                    // make this a foreground service so that android does not kill it while it is in the background
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        myStartForegroundService(LSLIntent);
-
-                    } else { // try our best with older Androids
-                        startService(LSLIntent);
-                    }
-                }
-            }
+        start.setOnClickListener(v -> {
+            onStartButtonPressedPreSync();
+            syncMovellaSensors();
+            // onStartButtonPressedPostSync(); Called by onSyncDone callback
         });
 
         Button stop = (Button) findViewById(R.id.stopLSL);
@@ -453,6 +446,7 @@ public class MainActivity extends Activity implements DotScannerCallback {
 
         stop.setOnClickListener(v -> {
             if (isRunning) {
+                DotSyncManager.getInstance(this).stopSyncing();
                 for (MovellaBridge device : mActiveDevices.values()) {
                     device.Stop();
                 }
@@ -461,6 +455,36 @@ public class MainActivity extends Activity implements DotScannerCallback {
                 lv.setAlpha(1f);
             }
         });
+    }
+
+    void syncMovellaSensors() {
+        if (mActiveDevices.size() < 2) {
+            Log.e("syncMovellaSensors", "No syncing needed");
+            //No syncing needed, proceed to PostSync
+            onStartButtonPressedPostSync();
+            return;
+        }
+        Log.e("MainActivity", "Try syncing");
+        streamingNow.setVisibility(View.VISIBLE);
+        streamingNow.setText("Syncing Movella sensors...");
+
+
+        //Animation for Streaming
+        Animation animation = new AlphaAnimation((float) 0.5, 0);
+        animation.setDuration(850);
+        animation.setInterpolator(new LinearInterpolator()); // do not alter
+        // animation rate
+        animation.setRepeatCount(Animation.INFINITE); // Repeat animation
+        // infinitely
+        animation.setRepeatMode(Animation.REVERSE); // Reverse animation at the
+        // end so the button will fade back in
+        // streamingNowBtn.startAnimation(animation);
+        streamingNow.startAnimation(animation);
+
+        ArrayList<DotDevice> activeDeviceList = mActiveDevices.values().stream().map(MovellaBridge::getDevice).collect(Collectors.toCollection(ArrayList::new));
+        activeDeviceList.get(0).setRootDevice(true);
+        activeDeviceList.forEach(v -> Log.e("syncMovellaSensors", "I must sync: " + v.getTag()));
+        DotSyncManager.getInstance(this).startSyncing(activeDeviceList, 1);
     }
 
     void checkAvailableSensors() {
@@ -486,6 +510,93 @@ public class MainActivity extends Activity implements DotScannerCallback {
         // Do not need to check: Asking for location permission if user selects this item
         SensorName.add("Location");
         adapter.notifyDataSetChanged();
+    }
+
+    void onStartButtonPressedPreSync() {
+        Log.e("MainActivity", "OnStartButtonPressedPreSync " + android.os.Process.myTid());
+        if (!isRunning) {
+            lv.setEnabled(false);
+            lv.setAlpha(0.1f);
+            // Build the list of selected items and give it over to the LSLIntent
+            SparseBooleanArray checked = lv.getCheckedItemPositions();
+            for (int i = 0; i < lv.getAdapter().getCount(); i++) {
+                Log.e(TAG, lv.getItemAtPosition(i).toString() + " " + checked.get(i));
+                LSLIntent.putExtra(lv.getItemAtPosition(i).toString(), checked.get(i));
+            }
+            for (MovellaBridge device : mConnectedDevices.values()) {
+                if (LSLIntent.getBooleanExtra(device.getDisplayName(), false)) {
+                    mActiveDevices.put(device.getDevice().getAddress(), device);
+                    if (device.getDevice().isSynced()) {
+                        Log.e("MainActivity", device.getDisplayName() + " already synced, stopping sync...");
+                        DotSyncManager.getInstance(this).stopSyncing();
+                    }
+                    Log.e(TAG, "Adding movella device to list of active devices:" + device.getDisplayName());
+                }
+            }
+        }
+    }
+
+    void onStartButtonPressedPostSync() {
+        Log.e("MainActivity", "OnStartButtonPressedPostSync " + android.os.Process.myTid());
+        runOnUiThread(new Thread(() -> {
+            streamingNow.setVisibility(View.INVISIBLE);
+            streamingNow.setText("Streaming Data...");
+            progressBar.setVisibility(View.GONE);
+        }
+        ));
+        for (MovellaBridge device : mActiveDevices.values()) {
+            Log.e(TAG, "Starting movella device " + device.getDisplayName());
+            device.Start();
+        }
+        // make this a foreground service so that android does not kill it while it is in the background
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            myStartForegroundService(LSLIntent);
+
+        } else { // try our best with older Androids
+            startService(LSLIntent);
+        }
+
+    }
+
+    @Override
+    public void onSyncingStarted(String s, boolean b, int i) {
+        progressBar.setVisibility(View.VISIBLE); // Make ProgressBar visible
+        progressBar.setProgress(0);
+        Log.e("MainActivity", "onSyncingStarted " + b + " " + i);
+    }
+
+    @Override
+    public void onSyncingProgress(int i, int i1) {
+        progressBar.setProgress(i);
+        Log.e("MainActivity", "onSyncingProgress " + i + " " + i1);
+    }
+
+    @Override
+    public void onSyncingResult(String s, boolean b, int i) {
+        Log.e("MainActivity", "onSyncingResult " + s + " " + b + " " + i);
+    }
+
+    @Override
+    public void onSyncingDone(HashMap<String, Boolean> hashMap, boolean b, int i) {
+        Log.e("MainActivity", "onSyncingDone " + b + " " + i);
+        if (b) onStartButtonPressedPostSync();
+        else {
+            runOnUiThread(new Thread(() -> {
+                lv.setEnabled(true);
+                lv.setAlpha(1.0f);
+                Log.e("MainActivity", "SYNC FAILED");
+                Toast.makeText(this, "Syncing Failed!", Toast.LENGTH_LONG);
+                streamingNow.setText("Syncing Failed!");
+                progressBar.setProgress(0);
+                progressBar.setVisibility(View.GONE);
+                mActiveDevices.clear();
+            }));
+        }
+    }
+
+    @Override
+    public void onSyncingStopped(String s, boolean b, int i) {
+        Log.e("MainActivity", "onSyncingStopped");
     }
 }
 

@@ -63,18 +63,29 @@ public class MovellaBridge implements DotDeviceCallback {
             e.printStackTrace();
         }
         assert mDataStreamOutlet != null;
-        mDevice.setMeasurementMode(DotPayload.PAYLOAD_TYPE_COMPLETE_EULER);
         mDevice.startMeasuring();
         Log.i(TAG, getDisplayName() + " StartMeasuring");
     }
 
     void Stop() {
-        if (mDevice != null) mDevice.stopMeasuring();
+        if (mDevice != null) {
+            Log.e("MovellaBridge", this.getDisplayName() + " " + mDevice.getConnectionState());
+            if (mDevice.getConnectionState() == DotDevice.CONN_STATE_CONNECTED) {
+                Log.e("MovellaBridge", this.getDisplayName() + " " + mDevice.getMeasurementState());
+                if (mDevice.getMeasurementState() == DotDevice.MEASUREMENT_STATE_ON)
+                    mDevice.stopMeasuring();
+            }
+        }
+        Log.e("MovellaBridge", this.getDisplayName() + ": Finished handling device");
         if (mDataStreamOutlet != null) {
+            Log.e("MovellaBridge", this.getDisplayName() + ": Close data stream");
             mDataStreamOutlet.close();
+            mDataStreamOutlet=null;
         }
         if (mMarkerStreamOutlet != null) {
+            Log.e("MovellaBridge", this.getDisplayName() + ": Close marker stream");
             mMarkerStreamOutlet.close();
+            mMarkerStreamOutlet=null;
         }
     }
 
@@ -108,39 +119,43 @@ public class MovellaBridge implements DotDeviceCallback {
 
     @Override
     public void onDotDataChanged(String s, DotData dotData) {
-        float[] data = new float[6];
+        float[] data = new float[7];
 
         for (int i = 0; i < 3; i++) {
             data[i] = dotData.getFreeAcc()[i];
             data[i + 3] = (float) dotData.getEuler()[i];
         }
+        data[6] = dotData.getSampleTimeFine();
         if (mDataStreamOutlet != null) {
             mDataStreamOutlet.push_sample(data);
         } else {
             Log.e(TAG, getDisplayName() + " mStreamOutlet is Null!");
         }
+
     }
 
     @Override
     public void onDotInitDone(String s) {
         Log.i(TAG, "Movella initialized " + s + " " + mDevice.getTag() + " " + mDevice.getSerialNumber() + "!");
+        mDevice.setMeasurementMode(DotPayload.PAYLOAD_TYPE_COMPLETE_EULER);
         mHost.onInitDone(this);
-        mDataStreamInfo = new LSL.StreamInfo(getDisplayName(), "misc", 6, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT);
+        mDataStreamInfo = new LSL.StreamInfo(getDisplayName(), "misc", 7, mDevice.getCurrentOutputRate(), LSL.ChannelFormat.float32, Build.FINGERPRINT);
         mMarkerStreamInfo = new LSL.StreamInfo(getDisplayName() + " Marker", "Markers", 1, LSL.IRREGULAR_RATE, LSL.ChannelFormat.string, Build.FINGERPRINT);
     }
 
     @Override
     public void onDotButtonClicked(String s, long l) {
         String[] sample = new String[1];
-        sample[0]=mDevice.getTag();
-        Log.i(TAG,getDisplayName()+" button pressed!");
-        if(mMarkerStreamOutlet!=null)
+        sample[0] = mDevice.getTag();
+        Log.i(TAG, getDisplayName() + " button pressed!");
+        if (mMarkerStreamOutlet != null)
             mMarkerStreamOutlet.push_sample(sample);
     }
 
     @Override
     protected void finalize() {
     }
+
 
     @Override
     public void onDotPowerSavingTriggered(String s) {

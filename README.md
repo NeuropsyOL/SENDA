@@ -26,9 +26,10 @@ The location stream includes four channels which contain, in this order:
 - Delta (in meters)
 
 ### Movella sensors
-All Movella DOT sensors are set to the EULER_COMPLETE measurement mode at the start of the measurement and stream free acceleration and Euler angles at a nominal sampling rate of 60 Hz. The stream contains 6 channels:
+All Movella DOT sensors are set to the EULER_COMPLETE measurement mode at the start of the measurement and stream free acceleration and Euler angles at a nominal sampling rate of 60 Hz. The stream contains 7 channels:
 - Free acceleration (3 channels)
 - Euler angles (3 channels)
+- Sensor sample time fine.
 
 For details about the data format and the orientation of the axes, see the Movella user manual.
 
@@ -72,6 +73,8 @@ This project is licensed under GNU General Public License License - see the [LIC
 ## Known Issues
 - Sometimes the scan button complains about mission bluetooth permissions but does the scan for Movella sensors anyway.
 - On a new installation multiple restarts of the app might be necessary until it asks for and notices newly granted permissions
+- Some phones don't respect the foreground service and wakelock. A possible workaround is to set the app to unlimited background power usage in the app settings.
+
 
 ## Acknowledgments
 [liblsl Library](https://github.com/sccn/labstreaminglayer/tree/master/LSL): I used this library to develop this application.
