@@ -34,13 +34,20 @@ All Movella DOT sensors are set to the EULER_COMPLETE measurement mode at the st
 For details about the data format and the orientation of the axes, see the Movella user manual.
 
 ## Getting Started
+
+#### Prerequisites:
+
+- Android Studio Giraffe | 2022.3.1 Patch 2
+- Android API 34 SDK platform
+- Android NDK 25.2.9519653
+- CMake 3.22.1
+
 #### Development:
 
 In order to start with development you need to follow these steps: 
 
 - Clone this repository
 - Open project with Android Studio
-
 
 #### Usage: 
 
@@ -77,7 +84,8 @@ This project is licensed under GNU General Public License License - see the [LIC
 
 
 ## Acknowledgments
-[liblsl Library](https://github.com/sccn/labstreaminglayer/tree/master/LSL): I used this library to develop this application.
-[Google Mediapipe](https://developers.google.com/mediapipe): The audio classifier uses portions of the Google MediaPipe example code released under the Apache v2.0 license.
+[liblsl](https://github.com/sccn/liblsl), MIT license
+[liblsl-Java](https://github.com/labstreaminglayer/liblsl-Java) MIT license
+[Google Mediapipe](https://developers.google.com/mediapipe): Apache v2.0 license.
 ## Cite As:
 
