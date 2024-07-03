@@ -503,6 +503,8 @@ public class MainActivity extends Activity implements DotScannerCallback, DotSyn
             SensorName.add("Rotation Vector");
         if (sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null)
             SensorName.add("Step Count");
+        if (sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE) != null)
+            SensorName.add("Gyroscope");
         // Do not need to check: Asking for audio permission if user selects this item
         SensorName.add("Audio");
         // Do not need to check: Asking for audio permission if user selects this item

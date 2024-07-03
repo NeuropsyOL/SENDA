@@ -120,6 +120,8 @@ public class LSLService extends Service {
             sensorBridges.add(new SensorBridge(3, msensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)));
         if (intent.getBooleanExtra("Rotation Vector", false))
             sensorBridges.add(new SensorBridge(5, msensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)));
+        if (intent.getBooleanExtra("Gyroscope", false))
+            sensorBridges.add(new SensorBridge(3, msensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             if (intent.getBooleanExtra("Step Count", false))
                 sensorBridges.add(new SensorBridge(1, msensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)));
