@@ -37,7 +37,7 @@ jobs:
         run: ./gradlew assembleDebug
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: SENDA-debug  # Change this to your desired artifact name
           path: ./app/build/outputs/apk/debug/*.apk
@@ -87,7 +87,7 @@ jobs:
           BUILD_TOOLS_VERSION: "34.0.0"
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: SENDA-release  # Change this to your desired artifact name
           path: ${{steps.sign_app.outputs.signedReleaseFile}}  # Change the path to the location of your APK file
