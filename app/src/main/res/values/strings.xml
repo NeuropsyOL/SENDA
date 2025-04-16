@@ -78,4 +78,12 @@
     <string name="pref_title_vibrate">Vibrate</string>
     <string name="start">Start LSL</string>
     <string name="stop">Stop LSL</string>
+
+    <string name="tutorial_page_1">Welcome to SENDA! This Tutorial guides you through the main UI elements of SENDA.
+        Swipe left/right to progress through the tutorial. You can close this tutorial any time by clicking the X on the
+    top left corner.</string>
+
+    <string name="tutorial_end">This concludes the tutorial. You can always show it again by pressing the question mark in the top left corner.
+    If you have any questions, please do not hesitate to contact the authors at https://github.com/organizations/NeuropsyOL/SENDA.
+    </string>
 </resources>

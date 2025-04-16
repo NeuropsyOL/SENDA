@@ -161,4 +161,19 @@
     <!--        app:layout_constraintHorizontal_bias="0.063"-->
     <!--        app:layout_constraintStart_toStartOf="parent"-->
     <!--        app:layout_constraintTop_toTopOf="parent" />-->
+
+    <!-- Tutorial button in the top right corner -->
+    <Button
+        android:id="@+id/tutorialButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:text="&#63;"
+        android:textColor="#20000000"
+        android:textSize="48sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:translationY="-16dp"
+        />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

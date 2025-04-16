@@ -147,6 +147,7 @@ public class MainActivity extends Activity implements DotScannerCallback, DotSyn
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         initDotSdk();
+
         setContentView(R.layout.activity_main);
         tv = (TextView) findViewById(R.id.tv);
 
@@ -192,6 +193,19 @@ public class MainActivity extends Activity implements DotScannerCallback, DotSyn
                     }
                 }
             }
+        });
+
+        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("MyPref",0);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        if(sharedPref.getBoolean("firstStart",true)) {
+            Intent tutorialIntent=new Intent(this,TutorialActivity.class);
+            startActivity(tutorialIntent);
+        }
+
+        Button tutorialButton = findViewById(R.id.tutorialButton);
+        tutorialButton.setOnClickListener(v->{
+            Intent tutorialIntent=new Intent(this,TutorialActivity.class);
+            startActivity(tutorialIntent);
         });
     } // end onCreate
 
