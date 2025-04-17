@@ -197,7 +197,7 @@ public class MainActivity extends Activity implements DotScannerCallback, DotSyn
 
         SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("MyPref",0);
         SharedPreferences.Editor editor = sharedPref.edit();
-        if(sharedPref.getBoolean("firstStart",true)) {
+        if(sharedPref.getBoolean("shouldShowTutorial",true)) {
             Intent tutorialIntent=new Intent(this,TutorialActivity.class);
             startActivity(tutorialIntent);
         }

@@ -37,15 +37,16 @@ class TutorialPageFragment() : Fragment() {
             else -> R.layout.tutorial_page_default // A default layout.
         }
 
-        var view = inflater.inflate(layoutResId, container, false)
+        val view = inflater.inflate(layoutResId, container, false)
+
         view.findViewById<Button>(R.id.close_tutorial_button)?.setOnClickListener({activity?.finish()})
         view.findViewById<Button>(R.id.buttonClose)?.setOnClickListener { activity?.finish() }
         view.findViewById<Button>(R.id.buttonCloseForever)?.setOnClickListener {
             val sharedPref: SharedPreferences =
                 requireContext().getSharedPreferences("MyPref", 0)
             val editor = sharedPref.edit()
-            editor.putBoolean("firstStart", false)
-            editor.commit()
+            editor.putBoolean("shouldShowTutorial", false)
+            editor.apply()
             activity?.finish()
         }
         return view
