@@ -109,17 +109,15 @@ class AudioClassifierHelper(
             listener?.onError(
                 "Audio Classifier failed to initialize. See error logs for details"
             )
-
             Log.e(
-                TAG, "MP task failed to load with error: " + e.message
+                TAG, "MP task failed to load with illegal state: " + e.message
             )
         } catch (e: RuntimeException) {
             listener?.onError(
                 "Audio Classifier failed to initialize. See error logs for details"
             )
-
             Log.e(
-                TAG, "MP task failed to load with error: " + e.message
+                TAG, "MP task failed to load with runtime error: " + e.message
             )
         }
     }
@@ -184,15 +182,14 @@ class AudioClassifierHelper(
         audioClassifier?.close()
         audioClassifier = null
         recorder?.stop()
+        recorder?.release()
+        recorder=null
         mStreamOutlet.close()
         mAllLabelsOutlet.close()
     }
 
     fun isClosed(): Boolean {
         return audioClassifier == null
-    }
-
-    protected fun finalize() {
     }
 
     private fun streamAudioResultListener(resultListener: AudioClassifierResult) {

@@ -34,8 +34,8 @@ object Utils {
         Sensor.TYPE_ROTATION_VECTOR to "Rotation Vector",
         Sensor.TYPE_STEP_COUNTER to "Step Count",
         Sensor.TYPE_LIGHT to "Light",
-        Sensor.TYPE_GYROSCOPE to "Gyroscope",
+        Sensor.TYPE_GYROSCOPE to "Gyroscope"
         )
-        return if (mSensorMap.containsKey(sensorType)) mSensorMap[sensorType] else null
+        return if (mSensorMap.containsKey(sensorType)) mSensorMap[sensorType] else "Unknown"
     }
 }
