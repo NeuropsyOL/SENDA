@@ -1,15 +1,26 @@
 name: Android Build
-
 on:
   push:
     branches:
-      - master  # Change this to your main branch name (e.g., master)
+      - master
       - development
+
 jobs:
-  build-debug:
-    name: Build debug
+  build:
     runs-on: ubuntu-latest
-    if: github.ref =='refs/heads/development'
+    strategy:
+      matrix:
+        include:
+          - branch: development
+            assemble: assembleDebug
+            artifact-name: SENDA-debug
+          - branch: master
+            assemble: assembleRelease
+            artifact-name: SENDA-release
+
+    # only run the matrix row when the push matches
+    if: ${{ github.ref == format('refs/heads/{0}', matrix.branch) }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -33,48 +44,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug
+      - name: Build APK
+        run: ./gradlew ${{ matrix.assemble }}
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: SENDA-debug  # Change this to your desired artifact name
-          path: ./app/build/outputs/apk/debug/*.apk
-
-  build-master:
-    name: Build master
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Setup JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: temurin
-          java-version: '17'  # Change this to the required Java version for your Android project
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: 7.4.2
-
-      - name: Setup Android NDK
-        uses: nttld/setup-ndk@v1.2.0
-        with:
-          ndk-version: r25c
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-
-      - name: Build release APK
-        run: ./gradlew assembleRelease
-
+      # only for release jobs:
       - name: Sign app APK
+        if: matrix.branch == 'master'
         uses: r0adkll/sign-android-release@v1
-        # ID used to access action output
         id: sign_app
         with:
           releaseDirectory: app/build/outputs/apk/release
@@ -83,12 +59,10 @@ jobs:
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
         env:
-          # override default build-tools version (33.0.0) -- optional
           BUILD_TOOLS_VERSION: "34.0.0"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SENDA-release  # Change this to your desired artifact name
-          path: ${{steps.sign_app.outputs.signedReleaseFile}}  # Change the path to the location of your APK file
-
+          name: ${{ matrix.artifact-name }}
+          path: ${{ matrix.branch == 'master' && steps.sign_app.outputs.signedReleaseFile || 'app/build/outputs/apk/debug/*.apk' }}
