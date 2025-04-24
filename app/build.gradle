@@ -1,4 +1,5 @@
 plugins {
+    // This plugin is used to download the yamnet model file
     id 'de.undercouch.download'
 }
 
