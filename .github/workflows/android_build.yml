@@ -1,68 +1,47 @@
-name: Android Build
-on:
-  push:
-    branches:
-      - master
-      - development
-
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        include:
-          - branch: development
-            assemble: assembleDebug
-            artifact-name: SENDA-debug
-          - branch: master
-            assemble: assembleRelease
-            artifact-name: SENDA-release
-
-    # only run the matrix row when the push matches
-    if: ${{ github.ref == format('refs/heads/{0}', matrix.branch) }}
+        buildType: [debug, release]
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Setup JDK
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+      - uses: gradle/actions/setup-gradle@v3
+        with: { gradle-version: 7.4.2 }
+      - uses: nttld/setup-ndk@v1.2.0
+        with: { ndk-version: r25c }
+      - run: chmod +x ./gradlew
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: 7.4.2
+      - name: Build debug APK
+        if: ${{ matrix.buildType == 'debug' && github.ref_name == 'development' }}
+        run: ./gradlew assembleDebug
 
-      - name: Setup Android NDK
-        uses: nttld/setup-ndk@v1.2.0
-        with:
-          ndk-version: r25c
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-
-      - name: Build APK
-        run: ./gradlew ${{ matrix.assemble }}
-
-      # only for release jobs:
-      - name: Sign app APK
-        if: matrix.branch == 'master'
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.SIGNING_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: "34.0.0"
-
-      - name: Upload APK artifact
+      - name: Upload debug APK
+        if: ${{ matrix.buildType == 'debug' && github.ref_name == 'development' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact-name }}
-          path: ${{ matrix.branch == 'master' && steps.sign_app.outputs.signedReleaseFile || 'app/build/outputs/apk/debug/*.apk' }}
+          name: SENDA-debug
+          path: app/build/outputs/apk/debug/*.apk
+
+      - name: Build release APK
+        if: ${{ matrix.buildType == 'release' && github.ref_name == 'master' }}
+        run: ./gradlew assembleRelease
+
+      - name: Sign app APK
+        if: ${{ matrix.buildType == 'release' && github.ref_name == 'master' }}
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
+        with: # same as above
+
+      - name: Upload release APK
+        if: ${{ matrix.buildType == 'release' && github.ref_name == 'master' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: SENDA-release
+          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+
