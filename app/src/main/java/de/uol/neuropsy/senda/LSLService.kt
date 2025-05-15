@@ -25,6 +25,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.google.mediapipe.tasks.audio.core.RunningMode
+import java.lang.Exception
 import java.util.Vector
 
 /**
@@ -229,8 +230,8 @@ class LSLService : Service() {
     }
 
     override fun onDestroy() {
-        MainActivity.Companion.isRunning = false
         Log.i(TAG, "Service onDestroy")
+        MainActivity.Companion.isRunning = false
         Toast.makeText(this, "Closing LSL!", Toast.LENGTH_SHORT).show()
         MainActivity.Companion.streamingNow!!.setVisibility(View.INVISIBLE)
         MainActivity.Companion.streamingNowBtn!!.setVisibility(View.INVISIBLE)
@@ -251,6 +252,13 @@ class LSLService : Service() {
             mAudioBridge!!.Stop()
         }
         if (mAudioClassifier != null) mAudioClassifier!!.stopAudioClassification()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        Log.e("LSLService","onTaskRemoved")
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
     }
 
     companion object {
