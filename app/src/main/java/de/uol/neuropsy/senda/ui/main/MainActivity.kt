@@ -24,20 +24,21 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import de.uol.neuropsy.senda.service.LSLService
-import de.uol.neuropsy.senda.utils.PermissionManager
 import de.uol.neuropsy.senda.R
-import de.uol.neuropsy.senda.service.ServiceEvent
+import de.uol.neuropsy.senda.data.SensorRepositoryImpl
+import de.uol.neuropsy.senda.service.LSLService
 import de.uol.neuropsy.senda.ui.state.UiState
+import de.uol.neuropsy.senda.utils.PermissionManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private val REQ_BACKGROUND_LOCATION= 4711
-    private val viewModel: MainViewModel by viewModels()
-    private var lslIntent: Intent? = null
-    private var lslService: LSLService? = null
+    private val repository = SensorRepositoryImpl(this)
+    private val viewModel: MainViewModel by viewModels {
+        MainViewModelFactory(application, repository)
+    }
     private lateinit var sensorListView: ListView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var startButton: Button
@@ -52,41 +53,118 @@ class MainActivity : AppCompatActivity() {
         "Location"          to arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION)
     )
 
+    private var lslService: LSLService? = null
     private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-            lslService = (binder as LSLService.LocalBinder).getService()
-            // Collect service events
-            lifecycleScope.launch {
-                lslService?.events?.collectLatest { event ->
-                    when (event) {
-                        ServiceEvent.Started -> viewModel.onServiceEvent(event)
-                        ServiceEvent.Stopped -> viewModel.onServiceEvent(event)
-                        is ServiceEvent.Failed -> viewModel.onServiceEvent(event)
-                    }
-                }
+        override fun onServiceConnected(name: ComponentName, binder: IBinder) {
+            val local = binder as LSLService.LocalBinder
+            lslService = local.getService()
+            lifecycleScope.launchWhenStarted {
+                lslService!!.events.collect { viewModel.onServiceEvent(it) }
             }
         }
-        override fun onServiceDisconnected(name: ComponentName?) {
+        override fun onServiceDisconnected(name: ComponentName) {
             lslService = null
         }
     }
+
+    private fun bindService() {
+        val intent = Intent(this, LSLService::class.java)
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+    }
+
+    private fun unbindService() {
+        lslService?.let { unbindService(serviceConnection) }
+        lslService = null
+    }
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         bindViews()
-        bindStateObserver()
         bindListeners()
         permissionManager = PermissionManager(this)
-        lslIntent = Intent(this, LSLService::class.java)
-        // Bind service early so that events can be collected
-        bindService(lslIntent!!, serviceConnection, Context.BIND_AUTO_CREATE)
+        lifecycleScope.launch {
+            viewModel.uiState.collectLatest { state ->
+                render(state)
+            }
+        }
     }
+
+    override fun onStart() {
+        super.onStart()
+        bindService()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unbindService()
+    }
+
 
     override fun onDestroy() {
         super.onDestroy()
-        unbindService(serviceConnection)
         viewModel.stopStreaming()
+    }
+
+    private fun render(state: UiState) {
+        // 1) Always hide all transient indicators at the start:
+        swipeRefreshLayout.isRefreshing = false
+        progressBar.visibility     = View.GONE
+        streamingStatus.clearAnimation()
+        streamingStatus.visibility = View.INVISIBLE
+
+        // 2) Then handle each state:
+        when (state) {
+            UiState.Idle -> {
+                startButton.isEnabled = true
+                stopButton .isEnabled = false
+                bindDeviceList(emptyList(), emptyList())
+            }
+            is UiState.Scanning -> {
+                swipeRefreshLayout.isRefreshing = true
+                startButton.isEnabled = false
+                stopButton .isEnabled = false
+            }
+            is UiState.DevicesDiscovered -> {
+                startButton.isEnabled = true
+                stopButton .isEnabled = false
+                bindDeviceList(state.onboardSensors, state.movellaDevices.map { it.displayName })
+            }
+            is UiState.Syncing -> {
+                progressBar.visibility = View.VISIBLE
+                progressBar.progress   = state.progress
+                startButton.isEnabled  = false
+                stopButton .isEnabled  = false
+            }
+            UiState.Streaming -> {
+                startButton.isEnabled  = false
+                stopButton .isEnabled  = true
+                // kick off the pulsing animation
+                val anim = AlphaAnimation(0.5f, 0f).apply {
+                    duration        = 850
+                    interpolator    = LinearInterpolator()
+                    repeatCount     = Animation.INFINITE
+                    repeatMode      = Animation.REVERSE
+                }
+                streamingStatus.visibility = View.VISIBLE
+                streamingStatus.startAnimation(anim)
+            }
+            is UiState.Error -> {
+                Toast.makeText(this, state.message, Toast.LENGTH_LONG).show()
+                // then immediately ask VM to clear error:
+                viewModel.clearError()
+            }
+        }
+    }
+
+    // Helper to update the ListView adapter in one shot
+    private fun bindDeviceList(onboard: List<String>, movella: List<String>) {
+        val all = onboard + movella
+        sensorAdapter.clear()
+        sensorAdapter.addAll(all)
+        sensorAdapter.notifyDataSetChanged()
     }
 
     private fun bindViews() {
@@ -169,6 +247,13 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
+                "Audio","Audio Classification"->{
+                    askForPermissions(
+                        position, name,
+                        arrayOf(android.Manifest.permission.RECORD_AUDIO)
+                    )
+                }
+
                 else -> {
                     val perms = sensorPermissions[name] ?: emptyArray()
                     if (perms.isNotEmpty()) {
@@ -188,7 +273,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         startButton.setOnClickListener {
-            // 1) Gather exactly which sensors the user checked:
+            // Gather which sensors the user checked:
             val selectedSensors = sensorAdapter
                 .getAllItems()
                 .filter { sensorListView.isItemChecked(sensorAdapter.getPosition(it)) }
@@ -198,11 +283,7 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // 2) Disable the list while we do our work
-            sensorListView.isEnabled = false
-            sensorListView.alpha = 0.1f
-
-            // 3) Launch our new single-entrypoint in the ViewModel:
+            // Launch our new single-entrypoint in the ViewModel:
             lifecycleScope.launch {
                 viewModel.startSelectedSensors(selectedSensors)
             }
@@ -210,33 +291,28 @@ class MainActivity : AppCompatActivity() {
 
         stopButton.setOnClickListener {
             viewModel.stopStreaming()    // cancel any sync + stop the service
-            sensorListView.isEnabled = true
-            sensorListView.alpha = 1.0f
         }
     }
 
-    private fun bindStateObserver() {
+    private fun askForPermissions(position: Int, sensor: String, perms: Array<String>) {
         lifecycleScope.launch {
-            viewModel.uiState.collectLatest { state ->
-                when (state) {
-                    is UiState.Idle -> renderIdle()
-                    is UiState.Scanning -> renderScanning()
-                    is UiState.DevicesDiscovered -> renderDevices(state)
-                    is UiState.Syncing -> renderSyncing(state.progress)
-                    is UiState.Streaming -> renderStreaming()
-                    is UiState.Error -> renderError(state.message)
-                    else -> {}
-                }
+            val results = permissionManager.requestPermissions(*perms)
+            if (results.values.all { it }) {
+                // leave the checkbox checked
+            } else {
+                // user denied → revert
+                sensorListView.setItemChecked(position, false)
+                Toast.makeText(
+                    this@MainActivity,
+                    "$sensor permission required",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
 
     // Special treatment only for background location
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
+    override fun onRequestPermissionsResult(requestCode: Int,permissions: Array<out String>,grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             REQ_BACKGROUND_LOCATION -> {
@@ -257,65 +333,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-
-
-
-    private fun renderIdle() {
-        startButton.isEnabled = true
-        stopButton .isEnabled = false
-        swipeRefreshLayout.isRefreshing = false
-        progressBar.visibility = View.GONE
-        streamingStatus.clearAnimation()
-        streamingStatus.visibility = View.INVISIBLE
-        sensorListView.isEnabled = true
-        sensorListView.alpha = 1.0f
-    }
-
-    private fun renderScanning() {
-        startButton.isEnabled = false
-        stopButton .isEnabled = false
-        swipeRefreshLayout.isRefreshing = true
-    }
-
-    private fun renderDevices(state: UiState.DevicesDiscovered) {
-        swipeRefreshLayout.isRefreshing = false
-        startButton.isEnabled = true
-        stopButton .isEnabled = false
-        // Update onboard sensors if any
-        sensorAdapter.clear()
-        sensorAdapter.addAll(state.onboardSensors + state.movellaDevices.map { it.displayName })
-        sensorAdapter.notifyDataSetChanged()
-    }
-
-    private fun renderSyncing(progress: Int) {
-        startButton.isEnabled = false
-        stopButton .isEnabled = false
-        swipeRefreshLayout.isRefreshing = false
-        progressBar.visibility = View.VISIBLE
-        progressBar.progress = progress
-    }
-
-    private fun renderStreaming() {
-        startButton.isEnabled = false
-        stopButton .isEnabled = true
-        progressBar.visibility = View.GONE
-        val animation: Animation = AlphaAnimation(0.5f, 0f).apply {
-            duration = 850
-            interpolator = LinearInterpolator()
-            repeatCount = Animation.INFINITE
-            repeatMode = Animation.REVERSE
-        }
-        streamingStatus.visibility = View.VISIBLE
-        streamingStatus.startAnimation(animation)
-    }
-
-    private fun renderError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-        renderIdle()
-    }
-
-
     private fun <T> ArrayAdapter<T>.getAllItems(): List<T> {
         val result = mutableListOf<T>()
         for (i in 0 until count) {

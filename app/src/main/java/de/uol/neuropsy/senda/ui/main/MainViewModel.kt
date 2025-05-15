@@ -2,13 +2,13 @@
 package de.uol.neuropsy.senda.ui.main
 
 import android.app.Application
-import android.content.Context
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import de.uol.neuropsy.senda.data.SensorRepositoryImpl
-import de.uol.neuropsy.senda.service.ServiceEvent
-import de.uol.neuropsy.senda.domain.SensorRepository
 import de.uol.neuropsy.senda.sensor.MovellaBridge
+import de.uol.neuropsy.senda.service.ServiceEvent
 import de.uol.neuropsy.senda.ui.state.UiState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,15 +18,26 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
-    private var syncJob: Job? = null
+class MainViewModelFactory(
+    private val app: Application,
+    private val repository: SensorRepositoryImpl
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return MainViewModel(app, repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
+class MainViewModel(application: Application, private val repository: SensorRepositoryImpl) : AndroidViewModel(application) {
     private var streamingJob : Job?=null
-    private val context: Context = application.applicationContext
-    private val repository: SensorRepository = SensorRepositoryImpl(context)
+
     // Holds the fully initialized MovellaBridge instances from the last scan
     private val discoveredBridges = mutableListOf<MovellaBridge>()
 
-    // Unified UI state
+    // UI state
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
@@ -58,20 +69,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /** Sync if >=2 Dots, then start the service—cancellable via stopStreaming() */
+
     fun startSelectedSensors(selected: List<String>) {
         // Cancel any in-flight sync/stream
         streamingJob?.cancel()
-
         streamingJob = viewModelScope.launch {
             // 1) pick the bridges they tapped
-            val bridgesToSync = discoveredBridges.filter { selected.contains(it.displayName) }
-            val dotHandles   = bridgesToSync.mapNotNull { it.handle }
+            val bridgesToSync = discoveredBridges.filter { selected.contains(it.displayName) }.mapNotNull { it.handle }
 
             // 2) sync if needed
-            if (dotHandles.size >= 2) {
+            if (bridgesToSync.size >= 2) {
                 repository
-                    .syncMovellaDevices(dotHandles)
+                    .syncMovellaDevices(bridgesToSync)
                     .onEach { progress : Int ->
                         _uiState.value = UiState.Syncing(progress)
                     }
@@ -92,6 +101,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Cancels sync/stream and stops the service */
+    fun stopStreaming() {
+        streamingJob?.cancel()
+        streamingJob = null
+        repository.stopStreaming()
+        _uiState.value = UiState.Idle
+    }
 
     /**
      * Handle LSLService events
@@ -104,12 +120,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /** Cancels sync/stream and stops the service */
-    fun stopStreaming() {
-        streamingJob?.cancel()
-        streamingJob = null
-        repository.stopStreaming()
+    fun clearError(){
         _uiState.value = UiState.Idle
     }
-
 }
