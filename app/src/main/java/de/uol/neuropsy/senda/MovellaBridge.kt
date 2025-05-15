@@ -14,8 +14,12 @@ import edu.ucsd.sccn.LSL.StreamInfo
 import edu.ucsd.sccn.LSL.StreamOutlet
 import java.io.IOException
 
-class MovellaBridge(context: Context, btDevice: BluetoothDevice?, hostActivity: MainActivity) :
+class MovellaBridge(context: Context, btDevice: BluetoothDevice?, private val initListener: MovellaInitListener) :
     DotDeviceCallback {
+
+    interface MovellaInitListener {
+        fun onMovellaInitDone(bridge: MovellaBridge)
+    }
 
     private var mMarkerStreamInfo: StreamInfo? = null
     private var mMarkerStreamOutlet: StreamOutlet? = null
@@ -25,7 +29,6 @@ class MovellaBridge(context: Context, btDevice: BluetoothDevice?, hostActivity: 
         get() = if (!mDevice.isInitDone) {
             null
         } else mDevice
-    private var mHost: MainActivity? = hostActivity
     private val mContext = context
     private val mDevice = DotDevice(mContext, btDevice, this)
 
@@ -112,7 +115,6 @@ class MovellaBridge(context: Context, btDevice: BluetoothDevice?, hostActivity: 
             "Movella initialized " + s + " " + mDevice!!.tag + " " + mDevice.serialNumber + "!"
         )
         mDevice.measurementMode = DotPayload.PAYLOAD_TYPE_COMPLETE_EULER
-        mHost!!.onInitDone(this)
         mDataStreamInfo = StreamInfo(
             displayName,
             "misc",
@@ -129,6 +131,7 @@ class MovellaBridge(context: Context, btDevice: BluetoothDevice?, hostActivity: 
             LSL.ChannelFormat.string,
             Build.FINGERPRINT
         )
+        initListener.onMovellaInitDone(this)
     }
 
     override fun onDotButtonClicked(s: String, l: Long) {

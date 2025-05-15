@@ -16,6 +16,7 @@ class SensorBridge internal constructor(dataSize: Int, var mSensor: Sensor) : Se
     private var mStreamOutlet: StreamOutlet? = null
 
     init {
+        mSensor.stringType
         mStreamInfo = StreamInfo(
             SimpleSensorType(mSensor.type) + " " + Build.MODEL,
             "eeg", dataSize, LSL.IRREGULAR_RATE, LSL.ChannelFormat.float32, Build.FINGERPRINT

@@ -8,155 +8,154 @@ import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.Color
-import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.net.wifi.WifiManager
 import android.net.wifi.WifiManager.MulticastLock
-import android.os.Build
+import android.os.Binder
 import android.os.IBinder
 import android.os.PowerManager
 import android.os.PowerManager.WakeLock
 import android.util.Log
-import android.view.View
-import android.view.animation.AlphaAnimation
-import android.view.animation.Animation
-import android.view.animation.LinearInterpolator
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.google.mediapipe.tasks.audio.core.RunningMode
-import java.lang.Exception
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Vector
 
 /**
  * Created by aliayubkhan on 19/04/2018.
  */
+
+
+sealed class ServiceEvent {
+    object Started : ServiceEvent()
+    object Stopped : ServiceEvent()
+    data class Failed(val error: String) : ServiceEvent()
+}
+
 class LSLService : Service() {
+
+    private val binder = LocalBinder()
+    private val _events = MutableSharedFlow<ServiceEvent>(replay = 1)
+    val events: SharedFlow<ServiceEvent> = _events
     private val sensorBridges = Vector<SensorBridge>()
-    private var mLocationBridge: LocationBridge? = null
-    private var mAudioBridge: AudioBridge? = null
-    private var mAudioClassifier: AudioClassifierHelper? = null
-    var uniqueID = Build.FINGERPRINT
-    var deviceName = Build.MODEL
+    private var locationBridge: LocationBridge? = null
+    private var audioBridge: AudioBridge? = null
+    private var audioClassifier: AudioClassifierHelper? = null
 
     //Wake Lock
     private lateinit var wakelock: WakeLock
     private lateinit var multicastLock: MulticastLock
 
-    //Animation for Streaming
-    var animation: Animation = AlphaAnimation(0.5.toFloat(), 0f)
+
+    inner class LocalBinder : Binder() {
+        fun getService(): LSLService = this@LSLService
+    }
+    override fun onBind(intent: Intent): IBinder = binder
+
     @SuppressLint("WakelockTimeout")
     override fun onCreate() {
-        val pm = (getSystemService(POWER_SERVICE) as PowerManager)
+        super.onCreate()
+        val pm = getSystemService(PowerManager::class.java)
         wakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, javaClass.canonicalName)
         wakelock.acquire()
-        val wifiManager = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
-        if (wifiManager != null) {
-            multicastLock = wifiManager.createMulticastLock("Log_Tag")
-            multicastLock.acquire()
-        }
+        val wifi = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
+        multicastLock = wifi.createMulticastLock("LSLService")
+        multicastLock.acquire()
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+        CoroutineScope(Dispatchers.Default).launch {
+            try {
+                createNotificationChannel()
+                startForegroundServiceNotification()
+                _events.emit(ServiceEvent.Started)
 
-        // this method is part of the mechanisms that allow this to be a foreground channel
-        createNotificationChannel()
-        if (MainActivity.Companion.streamingNow == null) {
-            throw AssertionError("StreamingNow is Null")
+                setupSensors(intent)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to start LSLService", e)
+                _events.emit(ServiceEvent.Failed(e.message ?: "Unknown error"))
+                stopSelf()
+            }
         }
-        MainActivity.Companion.streamingNow.setVisibility(View.VISIBLE)
-        MainActivity.Companion.streamingNowBtn!!.setVisibility(View.INVISIBLE)
-        animation.duration = 850
-        animation.interpolator = LinearInterpolator() // do not alter
-        // animation rate
-        animation.repeatCount = Animation.INFINITE // Repeat animation
-        // infinitely
-        animation.repeatMode = Animation.REVERSE // Reverse animation at the
-        // end so the button will fade back in
-        // streamingNowBtn.startAnimation(animation);
-        MainActivity.Companion.streamingNow.startAnimation(animation)
-        Log.i(TAG, "Service onStartCommand")
-        Toast.makeText(this, "Starting LSL!", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "SENDA can safely run in background!", Toast.LENGTH_LONG).show()
+        return START_NOT_STICKY
+    }
 
-        //Setting All sensors
-        val msensorManager = (getSystemService(SENSOR_SERVICE) as SensorManager)
-        if (intent.getBooleanExtra("Accelerometer", false)) sensorBridges.add(
-            SensorBridge(
-                3, msensorManager.getDefaultSensor(
-                    Sensor.TYPE_ACCELEROMETER
-                )
-            )
-        )
-        if (intent.getBooleanExtra("Light", false)) sensorBridges.add(
-            SensorBridge(
-                1, msensorManager.getDefaultSensor(
-                    Sensor.TYPE_LIGHT
-                )
-            )
-        )
-        if (intent.getBooleanExtra("Proximity", false)) sensorBridges.add(
-            SensorBridge(
-                1, msensorManager.getDefaultSensor(
-                    Sensor.TYPE_PROXIMITY
-                )
-            )
-        )
-        if (intent.getBooleanExtra("Gravity", false)) sensorBridges.add(
-            SensorBridge(
-                3, msensorManager.getDefaultSensor(
-                    Sensor.TYPE_GRAVITY
-                )
-            )
-        )
-        if (intent.getBooleanExtra("Linear Acceleration", false)) sensorBridges.add(
-            SensorBridge(
-                3, msensorManager.getDefaultSensor(
-                    Sensor.TYPE_LINEAR_ACCELERATION
-                )
-            )
-        )
-        if (intent.getBooleanExtra("Rotation Vector", false)) sensorBridges.add(
-            SensorBridge(
-                5, msensorManager.getDefaultSensor(
-                    Sensor.TYPE_ROTATION_VECTOR
-                )
-            )
-        )
-        if (intent.getBooleanExtra("Gyroscope", false)) sensorBridges.add(
-            SensorBridge(
-                3, msensorManager.getDefaultSensor(
-                    Sensor.TYPE_GYROSCOPE
-                )
-            )
-        )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            if (intent.getBooleanExtra("Step Count", false)) sensorBridges.add(
-                SensorBridge(
-                    1, msensorManager.getDefaultSensor(
-                        Sensor.TYPE_STEP_COUNTER
-                    )
-                )
-            )
+    private fun startForegroundServiceNotification() {
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher_round)
+            .setContentTitle("SENDA is running")
+            .setOngoing(true)
+            .build()
+        startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+    }
+
+    private suspend fun setupSensors(intent: Intent) = withContext(Dispatchers.Default) {
+        val sm = getSystemService(SensorManager::class.java)
+        // Onboard sensors
+        if (intent.getBooleanExtra("Accelerometer", false)) {
+            sm.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER)?.let {
+                sensorBridges.add(SensorBridge(3, it))
+            }
         }
-        for (sensorBridge in sensorBridges) {
-            msensorManager.registerListener(
-                sensorBridge,
-                sensorBridge.mSensor,
-                SensorManager.SENSOR_DELAY_UI
-            )
-            sensorBridge.Start()
+        if (intent.getBooleanExtra("Light", false)) {
+            sm.getDefaultSensor(android.hardware.Sensor.TYPE_LIGHT)?.let {
+                sensorBridges.add(SensorBridge(1, it))
+            }
         }
+        if (intent.getBooleanExtra("Proximity", false)) {
+            sm.getDefaultSensor(android.hardware.Sensor.TYPE_PROXIMITY)?.let {
+                sensorBridges.add(SensorBridge(1, it))
+            }
+        }
+        if (intent.getBooleanExtra("Gravity", false)) {
+            sm.getDefaultSensor(android.hardware.Sensor.TYPE_GRAVITY)?.let {
+                sensorBridges.add(SensorBridge(3, it))
+            }
+        }
+        if (intent.getBooleanExtra("Linear Acceleration", false)) {
+            sm.getDefaultSensor(android.hardware.Sensor.TYPE_LINEAR_ACCELERATION)?.let {
+                sensorBridges.add(SensorBridge(3, it))
+            }
+        }
+        if (intent.getBooleanExtra("Rotation Vector", false)) {
+            sm.getDefaultSensor(android.hardware.Sensor.TYPE_ROTATION_VECTOR)?.let {
+                sensorBridges.add(SensorBridge(5, it))
+            }
+        }
+        if (intent.getBooleanExtra("Gyroscope", false)) {
+            sm.getDefaultSensor(android.hardware.Sensor.TYPE_GYROSCOPE)?.let {
+                sensorBridges.add(SensorBridge(3, it))
+            }
+        }
+        if (intent.getBooleanExtra("Step Count", false)) {
+            sm.getDefaultSensor(android.hardware.Sensor.TYPE_STEP_COUNTER)?.let {
+                sensorBridges.add(SensorBridge(1, it))
+            }
+        }
+        sensorBridges.forEach {
+            sm.registerListener(it, it.mSensor, SensorManager.SENSOR_DELAY_UI)
+            it.Start()
+        }
+
+        // Other sensors not managed by the sensor manager
         if (intent.getBooleanExtra("Location", false)) {
-            mLocationBridge = LocationBridge(this)
-            mLocationBridge!!.Start()
+            locationBridge = LocationBridge(this@LSLService)
+            locationBridge?.Start()
         }
         if (intent.getBooleanExtra("Audio", false)) {
-            mAudioBridge = AudioBridge(this)
-            mAudioBridge!!.Start()
+            audioBridge = AudioBridge(this@LSLService)
+            audioBridge?.Start()
         }
         if (intent.getBooleanExtra("Audio classifier", false)) {
-            mAudioClassifier = AudioClassifierHelper(
-                this,
+            audioClassifier = AudioClassifierHelper(
+                this@LSLService,
                 AudioClassifierHelper.DISPLAY_THRESHOLD,
                 AudioClassifierHelper.DEFAULT_OVERLAP,
                 AudioClassifierHelper.DEFAULT_NUM_OF_RESULTS,
@@ -164,94 +163,34 @@ class LSLService : Service() {
                 null
             )
         }
-        MainActivity.Companion.isRunning = true
-
-        // This service is killed by the OS if it is not started as background service
-        // This feature is only supported in Android 10 or higher
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startMyOwnForeground()
-            Toast.makeText(this, "SENDA can safely run in background!", Toast.LENGTH_LONG).show()
-        } else {
-            startForeground(1, Notification())
-            Toast.makeText(this, "SENDA might be killed when in background!", Toast.LENGTH_LONG)
-                .show()
-        }
-        return START_NOT_STICKY
-    }
-
-    // From https://stackoverflow.com/questions/47531742/startforeground-fail-after-upgrade-to-android-8-1
-    // and https://androidwave.com/foreground-service-android-example/
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private fun startMyOwnForeground() {
-        val NOTIFICATION_CHANNEL_ID = "de.uol.neuropsy.senda"
-        val channelName = "SENDA Background Service"
-        val chan = NotificationChannel(
-            NOTIFICATION_CHANNEL_ID,
-            channelName,
-            NotificationManager.IMPORTANCE_DEFAULT
-        )
-        chan.lightColor = Color.GREEN
-        chan.lockscreenVisibility = Notification.VISIBILITY_PRIVATE
-        val manager = (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
-        manager.createNotificationChannel(chan)
-        val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-        val notification = notificationBuilder.setOngoing(true)
-            .setSmallIcon(R.mipmap.ic_launcher_round)
-            .setContentTitle("SENDA is running in background!")
-            .setPriority(NotificationManager.IMPORTANCE_DEFAULT)
-            .setCategory(Notification.CATEGORY_SERVICE)
-            .build()
-        val information_id =
-            35 // this must be unique and not 0, otherwise it does not have a meaning
-        startForeground(
-            information_id,
-            notification,
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-        )
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                "FOREGROUNDCHANNELSENDA",
-                "Foreground Service Channel SENDA",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            val manager = getSystemService(
-                NotificationManager::class.java
-            )
-            manager.createNotificationChannel(serviceChannel)
+        val chan = NotificationChannel(
+            CHANNEL_ID,
+            "SENDA Background Service",
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            lightColor = Color.GREEN
+            lockscreenVisibility = Notification.VISIBILITY_PRIVATE
         }
-    }
-
-    override fun onBind(arg0: Intent): IBinder? {
-        Log.i(TAG, "Service onBind")
-        return null
+        getSystemService(NotificationManager::class.java).createNotificationChannel(chan)
     }
 
     override fun onDestroy() {
-        Log.i(TAG, "Service onDestroy")
-        MainActivity.Companion.isRunning = false
-        Toast.makeText(this, "Closing LSL!", Toast.LENGTH_SHORT).show()
-        MainActivity.Companion.streamingNow!!.setVisibility(View.INVISIBLE)
-        MainActivity.Companion.streamingNowBtn!!.setVisibility(View.INVISIBLE)
-        MainActivity.Companion.streamingNowBtn!!.clearAnimation()
-        MainActivity.Companion.streamingNow!!.clearAnimation()
-        wakelock!!.release()
-        multicastLock!!.release()
-        //Unregister all sensor listeners
-        val msensorManager = (getSystemService(SENSOR_SERVICE) as SensorManager)
-        for (sensorBridge in sensorBridges) {
-            msensorManager.unregisterListener(sensorBridge)
-            sensorBridge.Stop()
+        super.onDestroy()
+        _events.tryEmit(ServiceEvent.Stopped)
+        wakelock.release()
+        multicastLock.release()
+
+        val sm = getSystemService(SensorManager::class.java)
+        sensorBridges.forEach {
+            sm.unregisterListener(it)
+            it.Stop()
         }
-        if (mLocationBridge != null) {
-            mLocationBridge!!.Stop()
-        }
-        if (mAudioBridge != null) {
-            mAudioBridge!!.Stop()
-        }
-        if (mAudioClassifier != null) mAudioClassifier!!.stopAudioClassification()
+        locationBridge?.Stop()
+        audioBridge?.Stop()
+        audioClassifier?.stopAudioClassification()
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -262,6 +201,8 @@ class LSLService : Service() {
     }
 
     companion object {
-        private val TAG = LSLService::class.java.simpleName
+        private const val TAG = "LSLService"
+        private const val CHANNEL_ID = "de.uol.neuropsy.senda.channel"
+        private const val NOTIF_ID = 1
     }
 }
