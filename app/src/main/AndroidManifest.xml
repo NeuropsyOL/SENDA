@@ -27,7 +27,7 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.main.MainActivity"
             android:exported="true"
             android:label="SENDA"
             android:screenOrientation="portrait"
@@ -39,7 +39,7 @@
         </activity>
 
         <activity
-            android:name=".TutorialActivity"
+            android:name=".ui.tutorial.TutorialActivity"
             android:exported="true"
             android:label="SENDA"
             android:screenOrientation="portrait"
@@ -47,7 +47,7 @@
         </activity>
 
         <service
-            android:name=".LSLService"
+            android:name=".service.LSLService"
             android:foregroundServiceType="camera|location|microphone" />
 
         <uses-library android:name="android.test.runner" />

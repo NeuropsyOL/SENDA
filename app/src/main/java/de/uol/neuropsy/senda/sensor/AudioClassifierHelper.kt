@@ -1,4 +1,4 @@
-package de.uol.neuropsy.senda
+package de.uol.neuropsy.senda.sensor
 
 /*
  * Copyright 2023 The TensorFlow Authors. All Rights Reserved.
@@ -20,7 +20,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioFormat
 import android.media.AudioRecord
-import android.media.MediaRecorder
 import android.os.Build
 import android.os.SystemClock
 import android.util.Log
@@ -30,7 +29,6 @@ import com.google.mediapipe.tasks.audio.core.RunningMode
 import com.google.mediapipe.tasks.components.containers.AudioData
 import com.google.mediapipe.tasks.components.containers.AudioData.AudioDataFormat
 import com.google.mediapipe.tasks.core.BaseOptions
-import com.google.mediapipe.tasks.core.Delegate
 import edu.ucsd.sccn.LSL
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit

@@ -1,4 +1,4 @@
-package de.uol.neuropsy.senda
+package de.uol.neuropsy.senda.ui.main
 
 import android.content.ComponentName
 import android.content.Context
@@ -24,7 +24,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import de.uol.neuropsy.senda.ui.UiState
+import de.uol.neuropsy.senda.service.LSLService
+import de.uol.neuropsy.senda.utils.PermissionManager
+import de.uol.neuropsy.senda.R
+import de.uol.neuropsy.senda.service.ServiceEvent
+import de.uol.neuropsy.senda.ui.state.UiState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -93,7 +97,9 @@ class MainActivity : AppCompatActivity() {
         streamingStatus = findViewById(R.id.streamingNow)
         progressBar = findViewById(R.id.progressBar)
 
-        sensorAdapter = ArrayAdapter(this, R.layout.list_view_text, R.id.streamsSelected, mutableListOf())
+        sensorAdapter = ArrayAdapter(this,
+            R.layout.list_view_text,
+            R.id.streamsSelected, mutableListOf())
         sensorListView.adapter = sensorAdapter
         sensorListView.choiceMode = ListView.CHOICE_MODE_MULTIPLE
     }

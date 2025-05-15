@@ -1,8 +1,8 @@
 // SensorRepository.kt
-package de.uol.neuropsy.senda.data
+package de.uol.neuropsy.senda.domain
 
 import com.xsens.dot.android.sdk.models.DotDevice
-import de.uol.neuropsy.senda.MovellaBridge
+import de.uol.neuropsy.senda.sensor.MovellaBridge
 import kotlinx.coroutines.flow.Flow
 
 /**

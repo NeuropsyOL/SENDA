@@ -1,4 +1,4 @@
-package de.uol.neuropsy.senda
+package de.uol.neuropsy.senda.sensor
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context

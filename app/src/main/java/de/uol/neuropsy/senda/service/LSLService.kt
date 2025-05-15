@@ -1,4 +1,4 @@
-package de.uol.neuropsy.senda
+package de.uol.neuropsy.senda.service
 
 import android.annotation.SuppressLint
 import android.app.Notification
@@ -19,6 +19,11 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.google.mediapipe.tasks.audio.core.RunningMode
+import de.uol.neuropsy.senda.R
+import de.uol.neuropsy.senda.sensor.AudioBridge
+import de.uol.neuropsy.senda.sensor.AudioClassifierHelper
+import de.uol.neuropsy.senda.sensor.LocationBridge
+import de.uol.neuropsy.senda.sensor.SensorBridge
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow

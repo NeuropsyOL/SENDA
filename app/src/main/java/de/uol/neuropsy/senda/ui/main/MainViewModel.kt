@@ -1,18 +1,19 @@
 // MainViewModel.kt (with SensorRepository integration)
-package de.uol.neuropsy.senda
+package de.uol.neuropsy.senda.ui.main
 
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.xsens.dot.android.sdk.models.DotDevice
-import de.uol.neuropsy.senda.data.SensorRepository
-import de.uol.neuropsy.senda.ui.UiState
+import de.uol.neuropsy.senda.data.SensorRepositoryImpl
+import de.uol.neuropsy.senda.service.ServiceEvent
+import de.uol.neuropsy.senda.domain.SensorRepository
+import de.uol.neuropsy.senda.sensor.MovellaBridge
+import de.uol.neuropsy.senda.ui.state.UiState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch

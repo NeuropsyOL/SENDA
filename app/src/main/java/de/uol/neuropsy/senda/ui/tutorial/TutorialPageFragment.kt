@@ -1,13 +1,13 @@
-package de.uol.neuropsy.senda
+package de.uol.neuropsy.senda.ui.tutorial
 
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.fragment.app.Fragment
+import de.uol.neuropsy.senda.R
 
 class TutorialPageFragment() : Fragment() {
 

@@ -1,5 +1,5 @@
 // PermissionManager.kt
-package de.uol.neuropsy.senda
+package de.uol.neuropsy.senda.utils
 
 import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.ActivityResultLauncher

@@ -1,7 +1,7 @@
 // UiState.kt
-package de.uol.neuropsy.senda.ui
+package de.uol.neuropsy.senda.ui.state
 
-import de.uol.neuropsy.senda.MovellaBridge
+import de.uol.neuropsy.senda.sensor.MovellaBridge
 
 sealed class UiState {
     object Idle : UiState()

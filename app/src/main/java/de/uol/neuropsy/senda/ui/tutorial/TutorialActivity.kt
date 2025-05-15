@@ -1,17 +1,16 @@
-package de.uol.neuropsy.senda
+package de.uol.neuropsy.senda.ui.tutorial
 
 import android.os.Bundle
-import android.widget.Button
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import de.uol.neuropsy.senda.R
-
 /**
  * The number of pages (wizard steps) to show in this demo.
  */
 private const val NUM_PAGES = 5
+
 
 
 class TutorialActivity : FragmentActivity() {

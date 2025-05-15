@@ -1,4 +1,4 @@
-package de.uol.neuropsy.senda
+package de.uol.neuropsy.senda.sensor
 
 import android.hardware.Sensor
 import android.hardware.SensorEvent

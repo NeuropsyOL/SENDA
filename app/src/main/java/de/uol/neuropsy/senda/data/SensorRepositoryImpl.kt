@@ -1,5 +1,5 @@
 // SensorRepositoryImpl.kt
-package de.uol.neuropsy.senda
+package de.uol.neuropsy.senda.data
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context
@@ -13,7 +13,9 @@ import com.xsens.dot.android.sdk.interfaces.DotSyncCallback
 import com.xsens.dot.android.sdk.models.DotDevice
 import com.xsens.dot.android.sdk.models.DotSyncManager
 import com.xsens.dot.android.sdk.utils.DotScanner
-import de.uol.neuropsy.senda.data.SensorRepository
+import de.uol.neuropsy.senda.service.LSLService
+import de.uol.neuropsy.senda.domain.SensorRepository
+import de.uol.neuropsy.senda.sensor.MovellaBridge
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow

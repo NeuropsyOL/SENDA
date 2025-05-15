@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".TutorialPageFragment">
+    tools:context=".ui.tutorial.TutorialPageFragment">
 
     <TextView style="?android:textAppearanceMedium"
         android:padding="16dp"
