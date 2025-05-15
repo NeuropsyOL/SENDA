@@ -8,7 +8,7 @@ apply plugin: 'kotlin-android'
 //apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdk 33
+    compileSdk 34
     namespace "de.uol.neuropsy.senda"
     ndkVersion "25.2.9519653"
     defaultConfig {
@@ -65,7 +65,8 @@ dependencies {
 
     // Mediapipe Library
     implementation 'com.google.mediapipe:tasks-audio:0.20230731'
-
+    implementation "androidx.activity:activity-ktx:1.9.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"
 }
 

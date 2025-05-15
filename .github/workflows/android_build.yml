@@ -20,7 +20,6 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
-        with: { gradle-version: 7.4.2 }
       - uses: nttld/setup-ndk@v1.2.0
         with: { ndk-version: r25c }
       - run: chmod +x ./gradlew
