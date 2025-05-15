@@ -14,7 +14,7 @@ private const val NUM_PAGES = 5
 
 
 class TutorialActivity : FragmentActivity() {
-    protected lateinit var viewPager: ViewPager2
+    private lateinit var viewPager: ViewPager2
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tutorial)

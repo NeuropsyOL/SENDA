@@ -13,8 +13,4 @@ sealed class UiState {
     data class Syncing(val progress: Int) : UiState()
     object Streaming : UiState()
     data class Error(val message: String) : UiState()
-    data class ServiceEvent(val type: ServiceEventType, val error: String? = null) : UiState()
 }
-
-// Service event types for broadcasting from the service (future step)
-enum class ServiceEventType { Started, Stopped, Failed }

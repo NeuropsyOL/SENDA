@@ -1,21 +1,19 @@
 // SensorRepositoryImpl.kt
 package de.uol.neuropsy.senda.data
 
-import android.bluetooth.BluetoothDevice
+import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorManager
-import android.bluetooth.le.ScanSettings
 import androidx.core.content.ContextCompat
-import com.xsens.dot.android.sdk.interfaces.DotScannerCallback
 import com.xsens.dot.android.sdk.interfaces.DotSyncCallback
 import com.xsens.dot.android.sdk.models.DotDevice
 import com.xsens.dot.android.sdk.models.DotSyncManager
 import com.xsens.dot.android.sdk.utils.DotScanner
-import de.uol.neuropsy.senda.service.LSLService
 import de.uol.neuropsy.senda.domain.SensorRepository
 import de.uol.neuropsy.senda.sensor.MovellaBridge
+import de.uol.neuropsy.senda.service.LSLService
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -24,7 +22,7 @@ import kotlinx.coroutines.flow.onCompletion
 
 /**
  * Concrete implementation of SensorRepository using Android sensors,
- * Xsens DOT SDK, and LSLService for streaming.
+ * Movella DOT SDK, and LSLService for streaming.
  */
 class SensorRepositoryImpl(private val context: Context) : SensorRepository {
 
@@ -48,25 +46,23 @@ class SensorRepositoryImpl(private val context: Context) : SensorRepository {
 
     override fun scanForMovellaDevices(): Flow<List<MovellaBridge>> = callbackFlow {
         val bridges = mutableListOf<MovellaBridge>()
-        val scanner = DotScanner(context, object : DotScannerCallback {
-            override fun onDotScanned(bt: BluetoothDevice, rssi: Int) {
-                // Create a bridge that only calls back to us when fully init-done
-                MovellaBridge(context, bt, object : MovellaBridge.MovellaInitListener {
-                    override fun onMovellaInitDone(bridge: MovellaBridge) {
-                        // When init finishes, add to our list and emit
-                        if (!bridges.contains(bridge)) {
-                            bridges.add(bridge)
-                            trySend(bridges.toList())
-                        }
+        val scanner = DotScanner(context
+        ) { bt, _ ->
+            // Create a bridge that only calls back to us when fully init-done
+            MovellaBridge(context, bt, object : MovellaBridge.MovellaInitListener {
+                override fun onMovellaInitDone(bridge: MovellaBridge) {
+                    // When init finishes, add to our list and emit
+                    if (!bridges.contains(bridge)) {
+                        bridges.add(bridge)
+                        trySend(bridges.toList())
                     }
-                })
-                // we do NOT emit here—only in onDotInitDone
-            }
-        }).apply {
+                }
+            })
+            // we do NOT emit here—only in onDotInitDone
+        }.apply {
             setScanMode(ScanSettings.SCAN_MODE_BALANCED)
             startScan()
         }
-
               // stop the scan when the flow collector is done
         awaitClose {
             scanner.stopScan()

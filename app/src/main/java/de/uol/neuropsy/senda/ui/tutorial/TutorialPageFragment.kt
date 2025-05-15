@@ -9,7 +9,7 @@ import android.widget.Button
 import androidx.fragment.app.Fragment
 import de.uol.neuropsy.senda.R
 
-class TutorialPageFragment() : Fragment() {
+class TutorialPageFragment : Fragment() {
 
     companion object {
         // Factory method that creates a new instance of TutorialPageFragment with position as an argument.
@@ -39,7 +39,7 @@ class TutorialPageFragment() : Fragment() {
 
         val view = inflater.inflate(layoutResId, container, false)
 
-        view.findViewById<Button>(R.id.close_tutorial_button)?.setOnClickListener({activity?.finish()})
+        view.findViewById<Button>(R.id.close_tutorial_button)?.setOnClickListener { activity?.finish() }
         view.findViewById<Button>(R.id.buttonClose)?.setOnClickListener { activity?.finish() }
         view.findViewById<Button>(R.id.buttonCloseForever)?.setOnClickListener {
             val sharedPref: SharedPreferences =
