@@ -35,9 +35,8 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     private val REQ_BACKGROUND_LOCATION= 4711
-    private val repository = SensorRepositoryImpl(this)
     private val viewModel: MainViewModel by viewModels {
-        MainViewModelFactory(application, repository)
+        MainViewModelFactory(application, SensorRepositoryImpl(applicationContext))
     }
     private lateinit var sensorListView: ListView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
