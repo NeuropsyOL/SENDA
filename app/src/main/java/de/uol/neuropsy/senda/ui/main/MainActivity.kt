@@ -117,9 +117,10 @@ class MainActivity : AppCompatActivity() {
         // 2) Then handle each state:
         when (state) {
             UiState.Idle -> {
+                sensorListView.isEnabled=true
+                sensorListView.alpha=1.0f
                 startButton.isEnabled = true
                 stopButton .isEnabled = false
-                bindDeviceList(emptyList(), emptyList())
             }
             is UiState.Scanning -> {
                 swipeRefreshLayout.isRefreshing = true
@@ -132,12 +133,15 @@ class MainActivity : AppCompatActivity() {
                 bindDeviceList(state.onboardSensors, state.movellaDevices.map { it.displayName })
             }
             is UiState.Syncing -> {
+                sensorListView.isEnabled=false
                 progressBar.visibility = View.VISIBLE
                 progressBar.progress   = state.progress
                 startButton.isEnabled  = false
                 stopButton .isEnabled  = false
             }
             UiState.Streaming -> {
+                sensorListView.isEnabled=false
+                sensorListView.alpha=0.1f
                 startButton.isEnabled  = false
                 stopButton .isEnabled  = true
                 // kick off the pulsing animation
