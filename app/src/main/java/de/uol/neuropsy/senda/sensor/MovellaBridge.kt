@@ -50,17 +50,15 @@ class MovellaBridge(context: Context, btDevice: BluetoothDevice?, private val in
             e.printStackTrace()
         }
         assert(mDataStreamOutlet != null)
-        mDevice!!.startMeasuring()
+        mDevice.startMeasuring()
         Log.i(TAG, displayName + " StartMeasuring")
     }
 
     fun Stop() {
-        if (mDevice != null) {
-            Log.e("MovellaBridge", displayName + " " + mDevice.connectionState)
-            if (mDevice.connectionState == DotDevice.CONN_STATE_CONNECTED) {
-                Log.e("MovellaBridge", displayName + " " + mDevice.measurementState)
-                if (mDevice.measurementState == DotDevice.MEASUREMENT_STATE_ON) mDevice.stopMeasuring()
-            }
+        Log.e("MovellaBridge", displayName + " " + mDevice.connectionState)
+        if (mDevice.connectionState == DotDevice.CONN_STATE_CONNECTED) {
+            Log.e("MovellaBridge", displayName + " " + mDevice.measurementState)
+            if (mDevice.measurementState == DotDevice.MEASUREMENT_STATE_ON) mDevice.stopMeasuring()
         }
         Log.e("MovellaBridge", displayName + ": Finished handling device")
         if (mDataStreamOutlet != null) {
@@ -88,7 +86,7 @@ class MovellaBridge(context: Context, btDevice: BluetoothDevice?, private val in
     }
 
     val displayName: String
-        get() = mDevice!!.name + " " + mDevice.tag
+        get() = mDevice.name + " " + mDevice.tag
 
     override fun onDotConnectionChanged(s: String, i: Int) {}
     override fun onDotServicesDiscovered(s: String, i: Int) {}
@@ -112,7 +110,7 @@ class MovellaBridge(context: Context, btDevice: BluetoothDevice?, private val in
     override fun onDotInitDone(s: String) {
         Log.i(
             TAG,
-            "Movella initialized " + s + " " + mDevice!!.tag + " " + mDevice.serialNumber + "!"
+            "Movella initialized " + s + " " + mDevice.tag + " " + mDevice.serialNumber + "!"
         )
         mDevice.measurementMode = DotPayload.PAYLOAD_TYPE_COMPLETE_EULER
         mDataStreamInfo = StreamInfo(
@@ -136,9 +134,9 @@ class MovellaBridge(context: Context, btDevice: BluetoothDevice?, private val in
 
     override fun onDotButtonClicked(s: String, l: Long) {
         val sample = arrayOfNulls<String>(1)
-        sample[0] = mDevice!!.tag
+        sample[0] = mDevice.tag
         Log.i(TAG, displayName + " button pressed!")
-        if (mMarkerStreamOutlet != null) mMarkerStreamOutlet!!.push_sample(sample)
+        mMarkerStreamOutlet?.push_sample(sample)
     }
 
     override fun onDotPowerSavingTriggered(s: String) {}
@@ -149,6 +147,6 @@ class MovellaBridge(context: Context, btDevice: BluetoothDevice?, private val in
     override fun onSyncStatusUpdate(s: String, b: Boolean) {}
 
     companion object {
-        var TAG = MovellaBridge::class.java.simpleName
+        var TAG:String = MovellaBridge::class.java.simpleName
     }
 }
