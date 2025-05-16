@@ -145,8 +145,8 @@ class LSLService : Service() {
             }
         }
         sensorBridges.forEach {
-            sm.registerListener(it, it.mSensor, SensorManager.SENSOR_DELAY_UI)
             it.Start()
+            sm.registerListener(it,it.mSensor,SensorManager.SENSOR_DELAY_UI)
         }
 
         // Other sensors not managed by the sensor manager
@@ -168,6 +168,8 @@ class LSLService : Service() {
                 null
             )
         }
+
+
     }
 
     private fun createNotificationChannel() {
