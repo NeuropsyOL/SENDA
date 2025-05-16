@@ -3,6 +3,7 @@ package de.uol.neuropsy.senda.sensor
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import android.os.Looper
 import android.util.Log
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -56,9 +57,9 @@ class LocationBridge internal constructor(context: Context?) {
         }
     }
 
-    @SuppressLint("MissingPermissions")
+    @SuppressLint("MissingPermission")
     fun Start() {
-        mlocationProviderClient.requestLocationUpdates(mlocationRequest, mlocationCallback, null)
+        mlocationProviderClient.requestLocationUpdates(mlocationRequest, mlocationCallback, Looper.getMainLooper())
     }
 
     fun Stop() {
