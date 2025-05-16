@@ -7,13 +7,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import de.uol.neuropsy.senda.data.SensorRepositoryImpl
+import de.uol.neuropsy.senda.data.SyncStatus
 import de.uol.neuropsy.senda.sensor.MovellaBridge
 import de.uol.neuropsy.senda.service.ServiceEvent
 import de.uol.neuropsy.senda.ui.state.UiState
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -55,6 +59,7 @@ class MainViewModel(application: Application, private val repository: SensorRepo
         viewModelScope.launch {
             repository.scanForMovellaDevices()
                 .onStart { _uiState.value = UiState.Scanning }
+                .onCompletion { _uiState.value=UiState.Idle }
                 .collect { bridges ->
                     // Cache for later sync
                     discoveredBridges.clear()
@@ -74,23 +79,30 @@ class MainViewModel(application: Application, private val repository: SensorRepo
         // Cancel any in-flight sync/stream
         streamingJob?.cancel()
         streamingJob = viewModelScope.launch {
-            // 1) pick the bridges they tapped
+            // Pick the bridges they tapped
             val bridgesToSync = discoveredBridges.filter { selected.contains(it.displayName) }.mapNotNull { it.handle }
 
-            // 2) sync if needed
+            // Sync if needed
             if (bridgesToSync.size >= 2) {
                 repository
                     .syncMovellaDevices(bridgesToSync)
-                    .onEach { progress : Int ->
-                        _uiState.value = UiState.Syncing(progress)
-                    }
-                    .collect{} // suspends until sync done or cancelled
+                    .onCompletion {  }
+                    .collect{ status : SyncStatus ->
+                            when(status){
+                                is SyncStatus.Progress ->  _uiState.value = UiState.Syncing(status.progress)
+                                is SyncStatus.Success -> {}
+                                is SyncStatus.Failed -> {_uiState.value=UiState.Error("Could not sync movella devices")}
+                            }
+                    } //
             }
 
-            // 3) now fire up the LSLService
+            // Now fire up the LSLService
             repository
                 .startStreaming(selected)
                 .onStart {
+                    // Hack: Start the Movella bridges in the VM as the repository does not keep track
+                    // of the discovered bridges. This should be done in the service
+                    discoveredBridges.filter { selected.contains(it.displayName) }.forEach{it.Start()}
                     _uiState.value = UiState.Streaming
                 }
                 .collect { success ->
@@ -105,6 +117,7 @@ class MainViewModel(application: Application, private val repository: SensorRepo
     fun stopStreaming() {
         streamingJob?.cancel()
         streamingJob = null
+        discoveredBridges.forEach{it.Stop()}
         repository.stopStreaming()
         _uiState.value = UiState.Idle
     }

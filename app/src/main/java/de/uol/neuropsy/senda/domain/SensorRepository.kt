@@ -2,6 +2,7 @@
 package de.uol.neuropsy.senda.domain
 
 import com.xsens.dot.android.sdk.models.DotDevice
+import de.uol.neuropsy.senda.data.SyncStatus
 import de.uol.neuropsy.senda.sensor.MovellaBridge
 import kotlinx.coroutines.flow.Flow
 
@@ -21,7 +22,7 @@ interface SensorRepository {
     /**
      * Synchronizes the given Movella devices by address, emitting progress 0..100.
      */
-    fun syncMovellaDevices(devices: List<DotDevice>): Flow<Int>
+    fun syncMovellaDevices(devices: List<DotDevice>): Flow<SyncStatus>
 
     /**
      * Starts streaming data for the selected sensors; emits true on success, false on failure.

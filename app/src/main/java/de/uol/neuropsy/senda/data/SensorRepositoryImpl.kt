@@ -14,11 +14,19 @@ import com.xsens.dot.android.sdk.utils.DotScanner
 import de.uol.neuropsy.senda.domain.SensorRepository
 import de.uol.neuropsy.senda.sensor.MovellaBridge
 import de.uol.neuropsy.senda.service.LSLService
+import de.uol.neuropsy.senda.service.ServiceEvent
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
+
+sealed class SyncStatus {
+    data class Progress(val progress : Int) : SyncStatus()
+    class Success : SyncStatus()
+    class Failed : SyncStatus()
+}
 
 /**
  * Concrete implementation of SensorRepository using Android sensors,
@@ -46,7 +54,7 @@ class SensorRepositoryImpl(private val context: Context) : SensorRepository {
 
     override fun scanForMovellaDevices(): Flow<List<MovellaBridge>> = callbackFlow {
         val bridges = mutableListOf<MovellaBridge>()
-        val scanner = DotScanner(context
+        DotScanner(context
         ) { bt, _ ->
             // Create a bridge that only calls back to us when fully init-done
             MovellaBridge(context, bt, object : MovellaBridge.MovellaInitListener {
@@ -62,14 +70,13 @@ class SensorRepositoryImpl(private val context: Context) : SensorRepository {
         }.apply {
             setScanMode(ScanSettings.SCAN_MODE_BALANCED)
             startScan()
-        }
-              // stop the scan when the flow collector is done
-        awaitClose {
-            scanner.stopScan()
+            delay(5000)
+            stopScan()
+            close()
         }
     }
 
-    override fun syncMovellaDevices(devices: List<DotDevice>): Flow<Int> = callbackFlow {
+    override fun syncMovellaDevices(devices: List<DotDevice>): Flow<SyncStatus> = callbackFlow {
         if (devices.isEmpty()) {
             close()
             return@callbackFlow
@@ -78,15 +85,19 @@ class SensorRepositoryImpl(private val context: Context) : SensorRepository {
         devices[0].isRootDevice = true
         val syncCallback = object : DotSyncCallback {
             override fun onSyncingStarted(deviceAddress: String?, isRoot: Boolean, count: Int) {
-                trySend(0)
+                trySend(SyncStatus.Progress(0))
             }
             override fun onSyncingProgress(progress: Int, total: Int) {
-                trySend(progress)
+                trySend(SyncStatus.Progress(progress))
             }
             override fun onSyncingResult(deviceAddress: String?, success: Boolean, reason: Int) {
                 // No-op
             }
             override fun onSyncingDone(results: HashMap<String, Boolean>, allSuccessful: Boolean, code: Int) {
+                if(allSuccessful)
+                    trySend(SyncStatus.Success())
+                else
+                    trySend(SyncStatus.Failed())
                 close()
             }
             override fun onSyncingStopped(deviceAddress: String?, isSuccess: Boolean, code: Int) {
@@ -96,7 +107,7 @@ class SensorRepositoryImpl(private val context: Context) : SensorRepository {
         // The Movella SDK requires the callback at construction via getInstance(callback)
         DotSyncManager.getInstance(syncCallback).startSyncing(ArrayList(devices), 1)
         awaitClose {
-            DotSyncManager.getInstance(syncCallback).stopSyncing()
+            //DotSyncManager.getInstance(syncCallback).stopSyncing()
         }
     }
 
@@ -105,6 +116,7 @@ class SensorRepositoryImpl(private val context: Context) : SensorRepository {
         val intent = Intent(context, LSLService::class.java).apply {
             selectedSensors.forEach { putExtra(it, true) }
         }
+
         ContextCompat.startForegroundService(context, intent)
         emit(true)
     }.onCompletion {
