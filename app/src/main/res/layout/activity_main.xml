@@ -17,141 +17,107 @@
         app:titleTextColor="@android:color/white"
         />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
-
-    <RelativeLayout
-        android:id="@+id/linearVertical"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="500dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.52"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv"
-        app:layout_constraintVertical_bias="0.31">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-            android:id="@+id/swiperefresh"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+        <TextView
+            android:id="@+id/tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Available streams:"
+            android:textAlignment="center"
+            android:textColor="#595959"
+            android:textSize="25sp"
+            app:layout_constraintBottom_toTopOf="@+id/swiperefresh"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <ListView
-                android:id="@+id/sensors"
+
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/swiperefresh"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="20dp"
-                android:background="@drawable/boundary"
-                android:dividerHeight="1dp" />
-
-        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-    </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/linearHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="500dp"
                 android:layout_marginStart="32dp"
                 android:layout_marginEnd="32dp"
-                android:layout_marginBottom="20dp"
-                android:orientation="horizontal"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.52"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/streamingNow">
+                app:layout_constraintTop_toBottomOf="@+id/tv"
+                app:layout_constraintVertical_bias="0.31"
+                >
 
-                <Button
-                    android:id="@+id/startLSL"
-                    android:layout_width="120dp"
+                <ListView
+                    android:id="@+id/sensors"
+                    android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@drawable/shape"
-                    android:baselineAligned="false"
-                    android:text="START LSL"
-                    android:textColor="#f2f2f2" />
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/boundary"
+                    android:dividerHeight="1dp" />
 
-                <Button
-                    android:id="@+id/stopLSL"
-                    android:layout_width="120dp"
-                    android:layout_height="match_parent"
-                    android:layout_alignParentEnd="true"
-                    android:background="@drawable/shape"
-                    android:text="STOP LSL"
-                    android:textColor="#f2f2f2" />
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-            </RelativeLayout>
+        <RelativeLayout
+            android:id="@+id/linearHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="20dp"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.52"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/streamingNow">
 
-    <TextView
-        android:id="@+id/streamingNow"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="Streaming Data"
-        android:textSize="25sp"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toTopOf="@+id/linearHorizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearVertical"
-        app:layout_constraintVertical_bias="0.513" />
+            <Button
+                android:id="@+id/startLSL"
+                android:layout_width="120dp"
+                android:layout_height="match_parent"
+                android:background="@drawable/shape"
+                android:baselineAligned="false"
+                android:text="START LSL"
+                android:textColor="#f2f2f2" />
 
-    <TextView
-        android:id="@+id/tv"
-        android:layout_width="307dp"
-        android:layout_height="38dp"
-        android:layout_marginEnd="36dp"
-        android:text="Available streams:"
-        android:textAlignment="center"
-        android:textColor="#595959"
-        android:textSize="25sp"
-        app:layout_constraintBottom_toTopOf="@+id/linearHorizontal"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.028" />
+            <Button
+                android:id="@+id/stopLSL"
+                android:layout_width="120dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentEnd="true"
+                android:background="@drawable/shape"
+                android:text="STOP LSL"
+                android:textColor="#f2f2f2" />
 
-    <ProgressBar
-        android:id="@+id/progressBar"
-        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-        android:layout_width="0dp"
-        android:layout_height="1000dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/linearHorizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearVertical" />
+        </RelativeLayout>
 
+        <TextView
+            android:id="@+id/streamingNow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Streaming Data"
+            android:textSize="25sp"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toTopOf="@+id/linearHorizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/swiperefresh"
+            app:layout_constraintVertical_bias="0.513" />
 
-    <!--    <ImageButton-->
-    <!--        android:id="@+id/settings_btn"-->
-    <!--        style="?android:attr/borderlessButtonStyle"-->
-    <!--        android:layout_width="45dp"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:layout_marginTop="28dp"-->
-    <!--        android:background="@drawable/boundary"-->
-    <!--        android:src="@drawable/ic_settings"-->
-    <!--        app:layout_constraintEnd_toEndOf="parent"-->
-    <!--        app:layout_constraintHorizontal_bias="0.063"-->
-    <!--        app:layout_constraintStart_toStartOf="parent"-->
-    <!--        app:layout_constraintTop_toTopOf="parent" />-->
-
-    <!-- Tutorial button in the top right corner
-    <Button
-        android:id="@+id/tutorialButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:text="&#63;"
-        android:textColor="#20000000"
-        android:textSize="48sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:translationY="-16dp"
-        />
-        -->
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:layout_width="0dp"
+            android:layout_height="1000dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/linearHorizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/swiperefresh" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>

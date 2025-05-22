@@ -10,13 +10,6 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingBottom="@dimen/activity_vertical_margin">
 
-    <include
-        layout="@layout/close_tutorial_button"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        />
-
-
     <ImageView
         android:id="@+id/tutorial_image_1"
         android:layout_width="wrap_content"
@@ -24,7 +17,7 @@
         android:contentDescription="First picture"
         android:src="@drawable/senda_1"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/close_tutorial_button"
+        app:layout_constraintTop_toTopOf="parent"
         />
 
     <TextView
@@ -32,7 +25,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/tutorial_page_1"
-        app:layout_constraintTop_toBottomOf="@+id/close_tutorial_button"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="@+id/parent"
         />
 

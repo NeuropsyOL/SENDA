@@ -81,7 +81,7 @@
 
     <string name="tutorial_page_1">Welcome to SENDA! This Tutorial guides you through the main UI elements of SENDA.
         Swipe left/right to progress through the tutorial. You can close this tutorial any time by clicking the X on the
-    top left corner.</string>
+    top right corner.</string>
 
     <string name="tutorial_page_2">Simply tap on sensors you want to stream. If sensors require special permissions,
         you will be asked for permission when you select them.</string>
