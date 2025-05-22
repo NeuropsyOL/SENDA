@@ -6,21 +6,30 @@ import android.content.Context
 import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorManager
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.xsens.dot.android.sdk.interfaces.DotSyncCallback
 import com.xsens.dot.android.sdk.models.DotDevice
 import com.xsens.dot.android.sdk.models.DotSyncManager
 import com.xsens.dot.android.sdk.utils.DotScanner
 import de.uol.neuropsy.senda.domain.SensorRepository
-import de.uol.neuropsy.senda.sensor.MovellaBridge
+import de.uol.neuropsy.senda.sensor.MovellaMetadata
+import de.uol.neuropsy.senda.sensor.SensorConfig
 import de.uol.neuropsy.senda.service.LSLService
-import de.uol.neuropsy.senda.service.ServiceEvent
+import de.uol.neuropsy.senda.utils.Utils.SENSOR_NAMES
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
+import java.util.concurrent.ConcurrentHashMap
+import javax.crypto.SealedObject
 
 sealed class SyncStatus {
     data class Progress(val progress : Int) : SyncStatus()
@@ -35,46 +44,78 @@ sealed class SyncStatus {
 class SensorRepositoryImpl(private val context: Context) : SensorRepository {
 
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private val availableSensors = mutableListOf<SensorConfig>()
 
-    override fun getAvailableOnboardSensors(): List<String> {
-        val available = mutableListOf<String>()
-        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let { available.add("Accelerometer") }
-        sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)?.let { available.add("Light") }
-        sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)?.let { available.add("Proximity") }
-        sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)?.let { available.add("Gravity") }
-        sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)?.let { available.add("Linear Acceleration") }
-        sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)?.let { available.add("Rotation Vector") }
-        sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)?.let { available.add("Step Count") }
-        sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)?.let { available.add("Gyroscope") }
-        available.add("Audio")
-        available.add("Audio classifier")
-        available.add("Location")
+    override fun getAvailableOnboardSensors(): List<SensorConfig> {
+        val available = mutableListOf<SensorConfig>()
+        SENSOR_NAMES.forEach { (type, name) ->
+            sensorManager.getDefaultSensor(type)
+                ?.let { available.add(SensorConfig.Onboard(name = name, type = type)) }
+        }
+        available.add(SensorConfig.Audio)
+        available.add(SensorConfig.AudioClassification)
+        available.add(SensorConfig.Location)
+        available.forEach { newSensor->if(availableSensors.none { oldSensor->oldSensor.name==newSensor.name }) availableSensors.add(newSensor) }
+        Log.e("SensorRepositoryImpl","I have ${available.map { it.name }} and cached ${availableSensors.map { it.name }}")
         return available
     }
 
-    override fun scanForMovellaDevices(): Flow<List<MovellaBridge>> = callbackFlow {
-        val bridges = mutableListOf<MovellaBridge>()
-        DotScanner(context
-        ) { bt, _ ->
-            // Create a bridge that only calls back to us when fully init-done
-            MovellaBridge(context, bt, object : MovellaBridge.MovellaInitListener {
-                override fun onMovellaInitDone(bridge: MovellaBridge) {
-                    // When init finishes, add to our list and emit
-                    if (!bridges.contains(bridge)) {
-                        bridges.add(bridge)
-                        trySend(bridges.toList())
-                    }
+    suspend fun scanForMovellaDevicesOnce(
+        timeoutMs: Long = 5_000L
+    ): List<SensorConfig.Movella> = coroutineScope {
+        val devices = ConcurrentHashMap.newKeySet<SensorConfig.Movella>()
+        val scanner = DotScanner(context) { bt, _ ->
+            launch {
+                val deviceName = MovellaMetadata.getDeviceName(context, bt)
+                if (devices.none { it.address == bt.address }) {
+                    devices.add(SensorConfig.Movella(bt.address, deviceName))
                 }
-            })
-            // we do NOT emit here—only in onDotInitDone
+            }}.apply {
+            setScanMode(ScanSettings.SCAN_MODE_BALANCED)
+            startScan()
+        }
+
+        // Wait either until timeout or the scope is canceled
+        try {
+            withTimeout(timeoutMs) {
+                // just suspend until timeout; callbacks keep adding to 'names'
+                suspendCancellableCoroutine<Unit> { /* no-op */ }
+            }
+        } catch (_: TimeoutCancellationException) {
+            // expected path: timeout expired
+        } finally {
+            scanner.stopScan()
+        }
+        devices.toList()
+    }
+
+
+    override fun scanForMovellaDevices(): Flow<List<SensorConfig.Movella>> = callbackFlow {
+        val devices = mutableListOf<SensorConfig.Movella>()
+        val scanner = DotScanner(context) { bt, _ ->
+            // launch a coroutine to fetch the name
+            launch {
+                val deviceName = MovellaMetadata.getDeviceName(context, bt)
+                if (devices.none { it.address == bt.address }) {
+                    devices.add(SensorConfig.Movella(bt.address,deviceName))
+                    if(!availableSensors.contains(SensorConfig.Movella(bt.address,deviceName)))
+                        availableSensors.add(SensorConfig.Movella(bt.address,deviceName))
+                    trySend(devices)
+                }
+            }
         }.apply {
             setScanMode(ScanSettings.SCAN_MODE_BALANCED)
             startScan()
             delay(5000)
-            stopScan()
             close()
         }
+        awaitClose { scanner.stopScan() }
     }
+
+    fun getAvailableSensors() : List<SensorConfig>{
+        return availableSensors
+    }
+
 
     override fun syncMovellaDevices(devices: List<DotDevice>): Flow<SyncStatus> = callbackFlow {
         if (devices.isEmpty()) {
@@ -83,6 +124,7 @@ class SensorRepositoryImpl(private val context: Context) : SensorRepository {
         }
         // Set the first device as the root
         devices[0].isRootDevice = true
+        var syncSuccessful=false
         val syncCallback = object : DotSyncCallback {
             override fun onSyncingStarted(deviceAddress: String?, isRoot: Boolean, count: Int) {
                 trySend(SyncStatus.Progress(0))
@@ -94,6 +136,7 @@ class SensorRepositoryImpl(private val context: Context) : SensorRepository {
                 // No-op
             }
             override fun onSyncingDone(results: HashMap<String, Boolean>, allSuccessful: Boolean, code: Int) {
+                syncSuccessful=allSuccessful
                 if(allSuccessful)
                     trySend(SyncStatus.Success())
                 else
@@ -101,20 +144,17 @@ class SensorRepositoryImpl(private val context: Context) : SensorRepository {
                 close()
             }
             override fun onSyncingStopped(deviceAddress: String?, isSuccess: Boolean, code: Int) {
-                close()
             }
         }
-        // The Movella SDK requires the callback at construction via getInstance(callback)
         DotSyncManager.getInstance(syncCallback).startSyncing(ArrayList(devices), 1)
-        awaitClose {
-            //DotSyncManager.getInstance(syncCallback).stopSyncing()
+        awaitClose { if(!syncSuccessful) DotSyncManager.getInstance(syncCallback).stopSyncing()
         }
+
     }
 
     override fun startStreaming(selectedSensors: List<String>): Flow<Boolean> = flow {
         // Start LSLService with extras
         val intent = Intent(context, LSLService::class.java).apply {
-            selectedSensors.forEach { putExtra(it, true) }
         }
 
         ContextCompat.startForegroundService(context, intent)
@@ -124,7 +164,20 @@ class SensorRepositoryImpl(private val context: Context) : SensorRepository {
     }
 
     override fun stopStreaming() {
-        val intent = Intent(context, LSLService::class.java)
-        context.stopService(intent)
+//        val intent = Intent(context, LSLService::class.java)
+//        context.stopService(intent)
+//        val syncCallback = object : DotSyncCallback {
+//            override fun onSyncingStarted(deviceAddress: String?, isRoot: Boolean, count: Int) {
+//            }
+//            override fun onSyncingProgress(progress: Int, total: Int) {
+//            }
+//            override fun onSyncingResult(deviceAddress: String?, success: Boolean, reason: Int) {
+//            }
+//            override fun onSyncingDone(results: HashMap<String, Boolean>, allSuccessful: Boolean, code: Int) {
+//            }
+//            override fun onSyncingStopped(deviceAddress: String?, isSuccess: Boolean, code: Int) {
+//            }
+//        }
+//        DotSyncManager.getInstance(syncCallback).stopSyncing()
     }
 }
