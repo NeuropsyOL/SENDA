@@ -1,43 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                                                   xmlns:app="http://schemas.android.com/apk/res-auto"
-                                                   xmlns:tools="http://schemas.android.com/tools"
-                                                   android:id="@+id/activity_lsldemo"
-                                                   android:layout_width="match_parent"
-                                                   android:layout_height="match_parent"
-                                                   android:paddingLeft="@dimen/activity_horizontal_margin"
-                                                   android:paddingTop="@dimen/activity_vertical_margin"
-                                                   android:paddingRight="@dimen/activity_horizontal_margin"
-                                                   android:paddingBottom="@dimen/activity_vertical_margin"
-                                                   tools:context="de.uol.neuropsy.senda.ui.main.MainActivity"
-                                                   tools:layout_editor_absoluteY="25dp">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:id="@+id/activity_lsldemo"
+    tools:context="de.uol.neuropsy.senda.ui.main.MainActivity">
 
-    <ImageView
-        android:id="@+id/streamingNowBtn"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="307dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="48dp"
-        android:layout_marginBottom="446dp"
-        android:src="@drawable/rec"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toTopOf="@+id/linearHorizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:layout_scrollFlags="scroll|enterAlways"
+        app:titleTextColor="@android:color/white"
+        />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
 
     <RelativeLayout
         android:id="@+id/linearVertical"
         android:layout_width="match_parent"
         android:layout_height="500dp"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
-        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.52"
         app:layout_constraintStart_toStartOf="parent"
@@ -58,52 +48,41 @@
                 android:dividerHeight="1dp" />
 
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        </ScrollView>
     </RelativeLayout>
 
-    <RelativeLayout
-        android:id="@+id/linearHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_alignParentTop="false"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginBottom="20dp"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.52"
-        app:layout_constraintStart_toStartOf="parent"
-    >
+            <RelativeLayout
+                android:id="@+id/linearHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginStart="32dp"
+                android:layout_marginEnd="32dp"
+                android:layout_marginBottom="20dp"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.52"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/streamingNow">
 
-        <Button
-            android:id="@+id/startLSL"
-            android:layout_width="100dp"
-            android:layout_height="match_parent"
-            android:background="@drawable/shape"
-            android:baselineAligned="false"
-            android:text="START LSL"
-            android:textColor="#f2f2f2"
-            tools:layout_editor_absoluteX="48dp"
-            tools:layout_editor_absoluteY="453dp" />
+                <Button
+                    android:id="@+id/startLSL"
+                    android:layout_width="120dp"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/shape"
+                    android:baselineAligned="false"
+                    android:text="START LSL"
+                    android:textColor="#f2f2f2" />
 
-        <Button
-            android:id="@+id/stopLSL"
-            android:layout_width="100dp"
-            android:layout_height="match_parent"
-            android:layout_alignParentRight="true"
-            android:background="@drawable/shape"
-            android:text="STOP LSL"
-            android:textColor="#f2f2f2"
-            tools:layout_editor_absoluteX="182dp"
-            tools:layout_editor_absoluteY="453dp" />
+                <Button
+                    android:id="@+id/stopLSL"
+                    android:layout_width="120dp"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentEnd="true"
+                    android:background="@drawable/shape"
+                    android:text="STOP LSL"
+                    android:textColor="#f2f2f2" />
 
-    </RelativeLayout>
+            </RelativeLayout>
 
     <TextView
         android:id="@+id/streamingNow"
@@ -123,7 +102,7 @@
         android:id="@+id/tv"
         android:layout_width="307dp"
         android:layout_height="38dp"
-        android:layout_marginRight="36dp"
+        android:layout_marginEnd="36dp"
         android:text="Available streams:"
         android:textAlignment="center"
         android:textColor="#595959"
@@ -160,7 +139,7 @@
     <!--        app:layout_constraintStart_toStartOf="parent"-->
     <!--        app:layout_constraintTop_toTopOf="parent" />-->
 
-    <!-- Tutorial button in the top right corner -->
+    <!-- Tutorial button in the top right corner
     <Button
         android:id="@+id/tutorialButton"
         android:layout_width="wrap_content"
@@ -173,5 +152,6 @@
         app:layout_constraintTop_toTopOf="parent"
         android:translationY="-16dp"
         />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+        -->
+        </androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>
