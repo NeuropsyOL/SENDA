@@ -8,6 +8,11 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.text.Html
+import android.text.method.LinkMovementMethod
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
@@ -20,14 +25,17 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.appbar.MaterialToolbar
 import de.uol.neuropsy.senda.R
 import de.uol.neuropsy.senda.data.SensorRepositoryImpl
 import de.uol.neuropsy.senda.service.LSLService
 import de.uol.neuropsy.senda.ui.state.UiState
+import de.uol.neuropsy.senda.ui.tutorial.TutorialActivity
 import de.uol.neuropsy.senda.utils.PermissionManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -46,12 +54,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var sensorAdapter: ArrayAdapter<String>
     private lateinit var permissionManager : PermissionManager
-    private val sensorPermissions = mapOf(
-        "Audio"             to arrayOf(android.Manifest.permission.RECORD_AUDIO),
-        "Audio classifier"  to arrayOf(android.Manifest.permission.RECORD_AUDIO),
-        "Location"          to arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION)
-    )
-
     private var lslService: LSLService? = null
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
@@ -81,6 +83,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val toolbar: MaterialToolbar = findViewById(R.id.toolbar)
+        // Set it as the support ActionBar
+        setSupportActionBar(toolbar)
         bindViews()
         bindListeners()
         permissionManager = PermissionManager(this)
@@ -90,6 +95,32 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        val inflater: MenuInflater = menuInflater
+        inflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_settings -> {
+                true
+            }
+            R.id.action_tutorial -> {
+                val intent = Intent(this, TutorialActivity::class.java)
+                startActivity(intent)
+                true
+            }
+            R.id.action_about -> {
+                showAboutDialog()
+                true
+            }
+
+            else -> false
+        }
+    }
+
 
     override fun onStart() {
         super.onStart()
@@ -139,11 +170,11 @@ class MainActivity : AppCompatActivity() {
                 startButton.isEnabled  = false
                 stopButton .isEnabled  = false
             }
-            UiState.Streaming -> {
+            is UiState.Streaming -> {
                 sensorListView.isEnabled=false
                 sensorListView.alpha=0.1f
                 startButton.isEnabled  = false
-                stopButton .isEnabled  = true
+                stopButton.isEnabled  = true
                 // kick off the pulsing animation
                 val anim = AlphaAnimation(0.5f, 0f).apply {
                     duration        = 850
@@ -336,6 +367,45 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun showAboutDialog() {
+        val pm: PackageManager = applicationContext.packageManager
+        val pkg: String = applicationContext.packageName
+        val appName: String = applicationContext.applicationInfo.loadLabel(pm).toString()
+        val version: String? = try {
+            pm.getPackageInfo(pkg, 0).versionName
+        } catch (e: PackageManager.NameNotFoundException) {
+            "?.?.?"
+        }
+
+        val html = """
+        <h1>About $appName</h1>
+        <p>Version $version<br>© 2025 Carl von Ossietzky Universität Oldenburg.</p>
+        <p>For more information, visit
+          <a href="https://github.com/NeuropsyOL">our Github repo</a>.
+        </p>
+        <h2>Credits</h2>
+        <ul>
+          <li><a href="https://github.com/labstreaminglayer/liblsl-Java">liblsl-Java</a> — MIT License</li>
+          <li><a href="https://github.com/sccn/liblsl">liblsl</a> — MIT License</li>
+        </ul>
+    """.trimIndent()
+
+        // 2) Inflate a TextView in code, apply padding and HTML
+        val tv = TextView(applicationContext).apply {
+            val pad = (resources.displayMetrics.density * 16).toInt()
+            setPadding(pad, pad, pad, pad)
+            text = Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY)
+            movementMethod = LinkMovementMethod.getInstance()
+        }
+
+        // 3) Build and show
+        MaterialAlertDialogBuilder(this)
+            .setView(tv)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
     private fun <T> ArrayAdapter<T>.getAllItems(): List<T> {
         val result = mutableListOf<T>()
         for (i in 0 until count) {

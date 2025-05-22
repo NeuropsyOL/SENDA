@@ -1,6 +1,10 @@
 package de.uol.neuropsy.senda.ui.tutorial
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
@@ -36,4 +40,21 @@ class TutorialActivity : FragmentActivity() {
             return TutorialPageFragment.newInstance(position)
         }
     }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        val inflater: MenuInflater = menuInflater
+        inflater.inflate(R.menu.menu_tutorial, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.close_tutorial -> {
+                finish()
+                true
+            }
+            else -> false
+        }
+    }
 }
+
