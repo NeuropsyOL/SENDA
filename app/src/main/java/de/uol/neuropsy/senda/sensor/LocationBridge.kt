@@ -16,7 +16,7 @@ import edu.ucsd.sccn.LSL.StreamInfo
 import edu.ucsd.sccn.LSL.StreamOutlet
 import java.io.IOException
 
-class LocationBridge internal constructor(context: Context?) {
+class LocationBridge internal constructor(context: Context?) : SensorBridge {
     // GoogleApiClient instance to connect to Google Play Services
     private val mlocationProviderClient: FusedLocationProviderClient
     private val mlocationRequest: LocationRequest
@@ -58,11 +58,11 @@ class LocationBridge internal constructor(context: Context?) {
     }
 
     @SuppressLint("MissingPermission")
-    fun Start() {
+    override fun Start() {
         mlocationProviderClient.requestLocationUpdates(mlocationRequest, mlocationCallback, Looper.getMainLooper())
     }
 
-    fun Stop() {
+    override fun Stop() {
         mlocationProviderClient.removeLocationUpdates(mlocationCallback)
         mStreamOutlet!!.close()
     }

@@ -12,15 +12,12 @@ import com.xsens.dot.android.sdk.models.FilterProfileInfo
 import edu.ucsd.sccn.LSL
 import edu.ucsd.sccn.LSL.StreamInfo
 import edu.ucsd.sccn.LSL.StreamOutlet
+import kotlinx.coroutines.CompletableDeferred
 import java.io.IOException
 
-class MovellaBridge(context: Context, btDevice: BluetoothDevice?, private val initListener: MovellaInitListener) :
+class MovellaBridge(context: Context, btDevice: BluetoothDevice?, private val initListener: () -> Unit) :
     DotDeviceCallback {
-
-    interface MovellaInitListener {
-        fun onMovellaInitDone(bridge: MovellaBridge)
-    }
-
+    private val initDeferred = CompletableDeferred<Unit>()
     private var mMarkerStreamInfo: StreamInfo? = null
     private var mMarkerStreamOutlet: StreamOutlet? = null
     private var mDataStreamInfo: StreamInfo? = null
@@ -32,7 +29,7 @@ class MovellaBridge(context: Context, btDevice: BluetoothDevice?, private val in
     private val mContext = context
     private val mDevice = DotDevice(mContext, btDevice, this)
 
-    init {
+    fun Initialize(){
         mDevice.connect()
     }
 
@@ -94,6 +91,7 @@ class MovellaBridge(context: Context, btDevice: BluetoothDevice?, private val in
     override fun onDotTagChanged(s: String, s1: String) {}
     override fun onDotBatteryChanged(s: String, i: Int, i1: Int) {}
     override fun onDotDataChanged(s: String, dotData: DotData) {
+        Log.v("MovellaBridge","Got data from $s: ${dotData.sampleTimeFine}")
         val data = FloatArray(7)
         for (i in 0..2) {
             data[i] = dotData.freeAcc[i]
@@ -115,7 +113,7 @@ class MovellaBridge(context: Context, btDevice: BluetoothDevice?, private val in
         mDevice.measurementMode = DotPayload.PAYLOAD_TYPE_COMPLETE_EULER
         mDataStreamInfo = StreamInfo(
             displayName,
-            "misc",
+            "imu",
             7,
             mDevice.currentOutputRate.toDouble(),
             LSL.ChannelFormat.float32,
@@ -129,8 +127,11 @@ class MovellaBridge(context: Context, btDevice: BluetoothDevice?, private val in
             LSL.ChannelFormat.string,
             Build.FINGERPRINT
         )
-        initListener.onMovellaInitDone(this)
+        initDeferred.complete(Unit)
     }
+
+    /** suspend until onDotInitDone callback fires */
+    suspend fun awaitInit() = initDeferred.await()
 
     override fun onDotButtonClicked(s: String, l: Long) {
         val sample = arrayOfNulls<String>(1)

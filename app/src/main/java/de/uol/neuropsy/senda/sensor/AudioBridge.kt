@@ -12,7 +12,7 @@ import edu.ucsd.sccn.LSL.StreamOutlet
 import java.io.IOException
 import kotlin.system.exitProcess
 
-class AudioBridge(context: Context?) {
+class AudioBridge(context: Context?) : SensorBridge {
     //LSL Outlets
     var checkFlag = false
     var mAudioThread: Thread
@@ -88,11 +88,13 @@ class AudioBridge(context: Context?) {
                 audioOutlet!!.push_chunk(audio_buffer)
             }
         }
-        mAudioThread.start()
+
     }
 
-    fun Start() {}
-    fun Stop() {
+    override fun Start() {
+        mAudioThread.start()
+    }
+    override fun Stop() {
         Log.e(TAG, "Stopping audio bridge")
         checkFlag = true
         try {

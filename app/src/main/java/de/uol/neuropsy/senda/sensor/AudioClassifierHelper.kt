@@ -40,7 +40,7 @@ class AudioClassifierHelper(
     var numOfResults: Int = DEFAULT_NUM_OF_RESULTS,
     var runningMode: RunningMode = RunningMode.AUDIO_CLIPS,
     var listener: ClassifierListener? = null,
-) {
+) : SensorBridge {
     private var mStreamOutlet = LSL.StreamOutlet(
         LSL.StreamInfo(
             "Audio classifier", "Marker", 1,
@@ -101,7 +101,6 @@ class AudioClassifierHelper(
                     BUFFER_SIZE_IN_BYTES.toInt()
                 )
 
-                startAudioClassification()
             }
         } catch (e: IllegalStateException) {
             listener?.onError(
@@ -120,7 +119,7 @@ class AudioClassifierHelper(
         }
     }
 
-    private fun startAudioClassification() {
+    override fun Start() {
         if (recorder?.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
             return
         }
@@ -172,7 +171,7 @@ class AudioClassifierHelper(
         return null
     }
 
-    fun stopAudioClassification() {
+    override fun Stop() {
         if(isClosed()) {
             Log.e(TAG,"Trying to stop audio classification, but audio classification is not running!")
         }
@@ -186,7 +185,7 @@ class AudioClassifierHelper(
         mAllLabelsOutlet.close()
     }
 
-    fun isClosed(): Boolean {
+    private fun isClosed(): Boolean {
         return audioClassifier == null
     }
 
