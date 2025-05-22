@@ -7,10 +7,11 @@ sealed class UiState {
     object Idle : UiState()
     object Scanning : UiState()
     data class DevicesDiscovered(
-        val onboardSensors: List<String>,
-        val movellaDevices: List<MovellaBridge>
+        val sensorNames: List<String>
     ) : UiState()
     data class Syncing(val progress: Int) : UiState()
     object Streaming : UiState()
+    object Starting : UiState()
+    object Stopping : UiState()
     data class Error(val message: String) : UiState()
 }

@@ -151,17 +151,17 @@ class MainActivity : AppCompatActivity() {
                 sensorListView.isEnabled=true
                 sensorListView.alpha=1.0f
                 startButton.isEnabled = true
-                stopButton .isEnabled = false
+                stopButton.isEnabled = false
             }
             is UiState.Scanning -> {
                 swipeRefreshLayout.isRefreshing = true
                 startButton.isEnabled = false
-                stopButton .isEnabled = false
+                stopButton.isEnabled = false
             }
             is UiState.DevicesDiscovered -> {
                 startButton.isEnabled = true
-                stopButton .isEnabled = false
-                bindDeviceList(state.onboardSensors, state.movellaDevices.map { it.displayName })
+                stopButton.isEnabled = false
+                bindDeviceList(state.sensorNames)
             }
             is UiState.Syncing -> {
                 sensorListView.isEnabled=false
@@ -185,6 +185,16 @@ class MainActivity : AppCompatActivity() {
                 streamingStatus.visibility = View.VISIBLE
                 streamingStatus.startAnimation(anim)
             }
+            is UiState.Starting -> {
+                sensorListView.isEnabled=false
+                sensorListView.alpha=0.1f
+                startButton.isEnabled  = false
+                stopButton.isEnabled  = true
+            }
+            is UiState.Stopping -> {
+                // No action needed beyond getting rid of
+                // transient indicators.
+            }
             is UiState.Error -> {
                 Toast.makeText(this, state.message, Toast.LENGTH_LONG).show()
                 // then immediately ask VM to clear error:
@@ -194,10 +204,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Helper to update the ListView adapter in one shot
-    private fun bindDeviceList(onboard: List<String>, movella: List<String>) {
-        val all = onboard + movella
+    private fun bindDeviceList(sensorNames: List<String>) {
         sensorAdapter.clear()
-        sensorAdapter.addAll(all)
+        sensorAdapter.addAll(sensorNames)
         sensorAdapter.notifyDataSetChanged()
     }
 
@@ -287,21 +296,8 @@ class MainActivity : AppCompatActivity() {
                         arrayOf(android.Manifest.permission.RECORD_AUDIO)
                     )
                 }
-
                 else -> {
-                    val perms = sensorPermissions[name] ?: emptyArray()
-                    if (perms.isNotEmpty()) {
-                        lifecycleScope.launch {
-                            val results=permissionManager
-                                .requestPermissions(*perms)
-                            if (!results.values.all { it }) {
-                                sensorListView.setItemChecked(position, false)
-                                Toast.makeText(this@MainActivity,
-                                    "Permission required to select $name",
-                                    Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }
+                    //No special permissions needed, no-op
                 }
             }
         }
@@ -345,7 +341,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Special treatment only for background location
+    // Special treatment only for background location - We need to ask for it in the legacy way
     override fun onRequestPermissionsResult(requestCode: Int,permissions: Array<out String>,grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
