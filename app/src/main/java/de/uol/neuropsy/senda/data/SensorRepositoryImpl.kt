@@ -35,6 +35,7 @@ sealed class SyncStatus {
     data class Progress(val progress : Int) : SyncStatus()
     class Success : SyncStatus()
     class Failed : SyncStatus()
+    class Stopped: SyncStatus()
 }
 
 /**
@@ -114,70 +115,5 @@ class SensorRepositoryImpl(private val context: Context) : SensorRepository {
 
     fun getAvailableSensors() : List<SensorConfig>{
         return availableSensors
-    }
-
-
-    override fun syncMovellaDevices(devices: List<DotDevice>): Flow<SyncStatus> = callbackFlow {
-        if (devices.isEmpty()) {
-            close()
-            return@callbackFlow
-        }
-        // Set the first device as the root
-        devices[0].isRootDevice = true
-        var syncSuccessful=false
-        val syncCallback = object : DotSyncCallback {
-            override fun onSyncingStarted(deviceAddress: String?, isRoot: Boolean, count: Int) {
-                trySend(SyncStatus.Progress(0))
-            }
-            override fun onSyncingProgress(progress: Int, total: Int) {
-                trySend(SyncStatus.Progress(progress))
-            }
-            override fun onSyncingResult(deviceAddress: String?, success: Boolean, reason: Int) {
-                // No-op
-            }
-            override fun onSyncingDone(results: HashMap<String, Boolean>, allSuccessful: Boolean, code: Int) {
-                syncSuccessful=allSuccessful
-                if(allSuccessful)
-                    trySend(SyncStatus.Success())
-                else
-                    trySend(SyncStatus.Failed())
-                close()
-            }
-            override fun onSyncingStopped(deviceAddress: String?, isSuccess: Boolean, code: Int) {
-            }
-        }
-        DotSyncManager.getInstance(syncCallback).startSyncing(ArrayList(devices), 1)
-        awaitClose { if(!syncSuccessful) DotSyncManager.getInstance(syncCallback).stopSyncing()
-        }
-
-    }
-
-    override fun startStreaming(selectedSensors: List<String>): Flow<Boolean> = flow {
-        // Start LSLService with extras
-        val intent = Intent(context, LSLService::class.java).apply {
-        }
-
-        ContextCompat.startForegroundService(context, intent)
-        emit(true)
-    }.onCompletion {
-        // nothing
-    }
-
-    override fun stopStreaming() {
-//        val intent = Intent(context, LSLService::class.java)
-//        context.stopService(intent)
-//        val syncCallback = object : DotSyncCallback {
-//            override fun onSyncingStarted(deviceAddress: String?, isRoot: Boolean, count: Int) {
-//            }
-//            override fun onSyncingProgress(progress: Int, total: Int) {
-//            }
-//            override fun onSyncingResult(deviceAddress: String?, success: Boolean, reason: Int) {
-//            }
-//            override fun onSyncingDone(results: HashMap<String, Boolean>, allSuccessful: Boolean, code: Int) {
-//            }
-//            override fun onSyncingStopped(deviceAddress: String?, isSuccess: Boolean, code: Int) {
-//            }
-//        }
-//        DotSyncManager.getInstance(syncCallback).stopSyncing()
     }
 }

@@ -82,37 +82,6 @@ class MainViewModel(application: Application, private val repository: SensorRepo
                 _uiState.value=UiState.Error("Sensor initialisation timed out!")
             }
             _uiState.value = UiState.Streaming
-            // Pick the bridges they tapped
-            //val bridgesToSync = discoveredBridges.filter { selected.contains(it) }.mapNotNull { it.handle }
-
-            // Sync if needed
-            //if (bridgesToSync.size >= 2) {
-            //    repository
-            //        .syncMovellaDevices(bridgesToSync)
-            //        .onCompletion {  }
-            //        .collect{ status : SyncStatus ->
-            //                when(status){
-            //                    is SyncStatus.Progress ->  _uiState.value = UiState.Syncing(status.progress)
-            //                    is SyncStatus.Success -> {}
-            //                    is SyncStatus.Failed -> {_uiState.value=UiState.Error("Could not sync movella devices")}
-            //                }
-            //        } //
-            //}
-
-//            // Now fire up the LSLService
-//            repository
-//                .startStreaming(selected)
-//                .onStart {
-//                    // Hack: Start the Movella bridges in the VM as the repository does not keep track
-//                    // of the discovered bridges. This should be done in the service
-//                    //discoveredBridges.filter { selected.contains(it.displayName) }.forEach{it.Start()}
-//                    _uiState.value = UiState.Streaming
-//                }
-//                .collect { success ->
-//                    if (!success) {
-//                        _uiState.value = UiState.Error("Failed to start streaming")
-//                    }
-//                }
         }
     }
 
@@ -122,7 +91,6 @@ class MainViewModel(application: Application, private val repository: SensorRepo
         streamingJob?.cancel()
         streamingJob = null
         serviceClient.stop()
-        repository.stopStreaming()
         serviceClient.unbind()
         _uiState.value = UiState.Idle
     }

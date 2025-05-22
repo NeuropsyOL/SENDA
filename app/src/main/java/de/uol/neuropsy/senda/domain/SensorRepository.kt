@@ -19,19 +19,4 @@ interface SensorRepository {
      * Collection is infinite; cancel to stop.
      */
     fun scanForMovellaDevices(): Flow<List<SensorConfig.Movella>>
-
-    /**
-     * Synchronizes the given Movella devices by address, emitting progress 0..100.
-     */
-    fun syncMovellaDevices(devices: List<DotDevice>): Flow<SyncStatus>
-
-    /**
-     * Starts streaming data for the selected sensors; emits true on success, false on failure.
-     */
-    fun startStreaming(selectedSensors: List<String>): Flow<Boolean>
-
-    /**
-     * Stops the current streaming session.
-     */
-    fun stopStreaming()
 }

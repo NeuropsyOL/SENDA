@@ -21,7 +21,11 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.google.mediapipe.tasks.audio.core.RunningMode
+import com.xsens.dot.android.sdk.interfaces.DotSyncCallback
+import com.xsens.dot.android.sdk.models.DotDevice
+import com.xsens.dot.android.sdk.models.DotSyncManager
 import de.uol.neuropsy.senda.R
+import de.uol.neuropsy.senda.data.SyncStatus
 import de.uol.neuropsy.senda.sensor.AudioBridge
 import de.uol.neuropsy.senda.sensor.AudioClassifierHelper
 import de.uol.neuropsy.senda.sensor.LocationBridge
@@ -32,14 +36,21 @@ import de.uol.neuropsy.senda.sensor.SensorConfig
 import de.uol.neuropsy.senda.utils.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 sealed class ServiceEvent {
     object Started : ServiceEvent()
     object Stopped : ServiceEvent()
     object Configured : ServiceEvent()
+    class Syncing(val progress : Int) : ServiceEvent()
     data class Failed(val error: String) : ServiceEvent()
 }
 
@@ -86,7 +97,6 @@ class LSLService : Service() {
                 stopSelf()
             }
         }
-        Toast.makeText(this, "SENDA can safely run in background!", Toast.LENGTH_LONG).show()
         return START_NOT_STICKY
     }
 
@@ -149,23 +159,87 @@ class LSLService : Service() {
             it.Start()
         }
 
-
-
-
+        if(movellaBridges.size>1 /*TODO and syncing is active in settings*/){
+            val terminalStatus: SyncStatus = syncMovellaDevices()
+                .onEach { status ->
+                    when (status) {
+                        is SyncStatus.Progress ->
+                            _events.tryEmit(ServiceEvent.Syncing(status.progress))
+                        else -> { /* ignore */ }
+                    }
+                }
+                .filter { it is SyncStatus.Success || it is SyncStatus.Failed }
+                .first()
+            when (terminalStatus) {
+                is SyncStatus.Failed  ->
+                    _events.tryEmit(ServiceEvent.Failed("Could not sync Movella devices!"))
+                else -> {}
+                }
+            }
         movellaBridges.forEach { it.Start() }
         _events.emit(ServiceEvent.Started)
-    }
+        }
 
     fun stopStreaming(){
-        val sm = getSystemService(SensorManager::class.java)
         sensorBridges.forEach {
             it.Stop()
         }
         movellaBridges.forEach { it.Stop() }
+        stopSyncing()
+        movellaBridges.forEach { it.Disconnect() }
         movellaBridges.clear()
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
         _events.tryEmit(ServiceEvent.Stopped)
     }
 
+    private fun syncMovellaDevices(): Flow<SyncStatus> = callbackFlow {
+        // Set the first device as the root
+        movellaBridges[0].handle?.isRootDevice = true
+        var syncSuccessful=false
+        val syncCallback = object : DotSyncCallback {
+            override fun onSyncingStarted(deviceAddress: String?, isRoot: Boolean, count: Int) {
+                trySend(SyncStatus.Progress(0))
+            }
+            override fun onSyncingProgress(progress: Int, total: Int) {
+                trySend(SyncStatus.Progress(progress))
+            }
+            override fun onSyncingResult(deviceAddress: String?, success: Boolean, reason: Int) {
+                // No-op
+            }
+            override fun onSyncingDone(results: HashMap<String, Boolean>, allSuccessful: Boolean, code: Int) {
+                syncSuccessful=allSuccessful
+                if(allSuccessful)
+                    trySend(SyncStatus.Success())
+                else
+                    trySend(SyncStatus.Failed())
+                close()
+            }
+            override fun onSyncingStopped(deviceAddress: String?, isSuccess: Boolean, code: Int) {
+            }
+        }
+        DotSyncManager.getInstance(syncCallback).startSyncing(ArrayList(movellaBridges.map { it.handle }), 1)
+        awaitClose { if(!syncSuccessful) DotSyncManager.getInstance(syncCallback).stopSyncing()
+        }
+    }
+
+
+    private fun stopSyncing() : Flow<SyncStatus> = callbackFlow {
+        val syncCallback = object : DotSyncCallback {
+            override fun onSyncingStarted(deviceAddress: String?, isRoot: Boolean, count: Int) {
+            }
+            override fun onSyncingProgress(progress: Int, total: Int) {
+            }
+            override fun onSyncingResult(deviceAddress: String?, success: Boolean, reason: Int) {
+            }
+            override fun onSyncingDone(results: HashMap<String, Boolean>, allSuccessful: Boolean, code: Int) {
+            }
+            override fun onSyncingStopped(deviceAddress: String?, isSuccess: Boolean, code: Int) {
+            }
+        }
+        //movellaBridges.map { it.handle }.filterNotNull().toTypedArray()
+        DotSyncManager.getInstance(syncCallback).stopSyncing()
+    }
     private fun createNotificationChannel() {
         val chan = NotificationChannel(
             CHANNEL_ID,
@@ -180,14 +254,13 @@ class LSLService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        _events.tryEmit(ServiceEvent.Stopped)
+        stopStreaming()
         wakelock.release()
         multicastLock.release()
-        stopStreaming()
+        _events.tryEmit(ServiceEvent.Stopped)
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        Log.e("LSLService","onTaskRemoved")
         stopStreaming()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()

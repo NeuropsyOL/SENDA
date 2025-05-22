@@ -1,10 +1,12 @@
 package de.uol.neuropsy.senda.ui.main
 
+import android.hardware.Sensor
 import android.util.Log
 import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.test
 import de.uol.neuropsy.senda.data.SensorRepositoryImpl
 import de.uol.neuropsy.senda.sensor.MovellaBridge
+import de.uol.neuropsy.senda.sensor.SensorConfig
 import de.uol.neuropsy.senda.ui.state.UiState
 import io.mockk.coEvery
 import io.mockk.every
@@ -45,9 +47,9 @@ class MainViewModelTest {
     @Test
     fun `startScan emits scanning then discovered`() = runTest {
         val onboard = listOf("Accelerometer", "Gyroscope")
-        val movellaBridges = listOf<MovellaBridge>()  // no BLE devices
+        val movellaBridges = listOf<SensorConfig.Movella>()  // no BLE devices
 
-        every { repository.getAvailableOnboardSensors() } returns onboard
+        every { repository.getAvailableOnboardSensors().map{it.name} } returns onboard
         coEvery { repository.scanForMovellaDevices() } returns flowOf(movellaBridges)
 
         vm.uiState
@@ -61,9 +63,7 @@ class MainViewModelTest {
 
                 // Discovered with just onboard
                 val discovered = awaitItem() as UiState.DevicesDiscovered
-                assertEquals(onboard, discovered.onboardSensors)
-                assertEquals(/* expected = */ emptyList<MovellaBridge>(), /* actual = */ discovered.movellaDevices)
-
+                assertEquals(onboard, discovered.sensorNames)
                 cancelAndIgnoreRemainingEvents()
             }
     }
@@ -75,9 +75,6 @@ class MainViewModelTest {
     @Test fun `startSelectedSensors with one Dot skips sync and streams`() = runTest {
         val selected = listOf("Accelerometer")
         every { repository.getAvailableOnboardSensors() } returns emptyList()
-        coEvery { repository.syncMovellaDevices(any()) } returns flow { /* never emits */ }
-        coEvery { repository.startStreaming(selected) } returns flowOf(true)
-
         vm.uiState
             .test {
                 assertIs<UiState.Idle>(awaitItem())
@@ -94,8 +91,6 @@ class MainViewModelTest {
     @Test fun `startSelectedSensors error from streaming emits Error`() = runTest {
         val selected = listOf("Accelerometer")
         coEvery { repository.getAvailableOnboardSensors() } returns emptyList()
-        coEvery { repository.syncMovellaDevices(any()) } returns flow { /* skip */ }
-        coEvery { repository.startStreaming(selected) } returns flowOf(false)
 
         vm.uiState
             .test {
