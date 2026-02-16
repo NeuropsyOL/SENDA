@@ -1,4 +1,4 @@
-package de.uol.neuropsy.senda
+package de.uol.neuropsy.senda.sensor
 
 /*
  * Copyright 2023 The TensorFlow Authors. All Rights Reserved.
@@ -20,7 +20,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioFormat
 import android.media.AudioRecord
-import android.media.MediaRecorder
 import android.os.Build
 import android.os.SystemClock
 import android.util.Log
@@ -30,7 +29,6 @@ import com.google.mediapipe.tasks.audio.core.RunningMode
 import com.google.mediapipe.tasks.components.containers.AudioData
 import com.google.mediapipe.tasks.components.containers.AudioData.AudioDataFormat
 import com.google.mediapipe.tasks.core.BaseOptions
-import com.google.mediapipe.tasks.core.Delegate
 import edu.ucsd.sccn.LSL
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -42,7 +40,7 @@ class AudioClassifierHelper(
     var numOfResults: Int = DEFAULT_NUM_OF_RESULTS,
     var runningMode: RunningMode = RunningMode.AUDIO_CLIPS,
     var listener: ClassifierListener? = null,
-) {
+) : SensorBridge {
     private var mStreamOutlet = LSL.StreamOutlet(
         LSL.StreamInfo(
             "Audio classifier", "Marker", 1,
@@ -103,28 +101,25 @@ class AudioClassifierHelper(
                     BUFFER_SIZE_IN_BYTES.toInt()
                 )
 
-                startAudioClassification()
             }
         } catch (e: IllegalStateException) {
             listener?.onError(
                 "Audio Classifier failed to initialize. See error logs for details"
             )
-
             Log.e(
-                TAG, "MP task failed to load with error: " + e.message
+                TAG, "MP task failed to load with illegal state: " + e.message
             )
         } catch (e: RuntimeException) {
             listener?.onError(
                 "Audio Classifier failed to initialize. See error logs for details"
             )
-
             Log.e(
-                TAG, "MP task failed to load with error: " + e.message
+                TAG, "MP task failed to load with runtime error: " + e.message
             )
         }
     }
 
-    private fun startAudioClassification() {
+    override fun Start() {
         if (recorder?.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
             return
         }
@@ -176,7 +171,7 @@ class AudioClassifierHelper(
         return null
     }
 
-    fun stopAudioClassification() {
+    override fun Stop() {
         if(isClosed()) {
             Log.e(TAG,"Trying to stop audio classification, but audio classification is not running!")
         }
@@ -184,15 +179,14 @@ class AudioClassifierHelper(
         audioClassifier?.close()
         audioClassifier = null
         recorder?.stop()
+        recorder?.release()
+        recorder=null
         mStreamOutlet.close()
         mAllLabelsOutlet.close()
     }
 
-    fun isClosed(): Boolean {
+    private fun isClosed(): Boolean {
         return audioClassifier == null
-    }
-
-    protected fun finalize() {
     }
 
     private fun streamAudioResultListener(resultListener: AudioClassifierResult) {

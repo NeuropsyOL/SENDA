@@ -1,13 +1,15 @@
 plugins {
+    // This plugin is used to download the yamnet model file
     id 'de.undercouch.download'
 }
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-parcelize'
 //apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdk 33
+    compileSdk 34
     namespace "de.uol.neuropsy.senda"
     ndkVersion "25.2.9519653"
     defaultConfig {
@@ -42,6 +44,11 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
 }
 
 // import DownloadModels task
@@ -64,8 +71,31 @@ dependencies {
 
     // Mediapipe Library
     implementation 'com.google.mediapipe:tasks-audio:0.20230731'
-
+    implementation "androidx.activity:activity-ktx:1.9.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+
+
+    // unit‐test deps
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.0"
+    testImplementation "app.cash.turbine:turbine:0.12.1"
+    testImplementation "io.mockk:mockk:1.13.5"
+    testImplementation "androidx.test:core:1.5.0"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'// for ApplicationProvider
+
+    // instrumented‐test deps
+    androidTestImplementation "androidx.test.ext:junit:1.1.5"
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"
+    // coroutine test
+// turbine for Flow testing
+    testImplementation "app.cash.turbine:turbine:0.12.1"
+// MockK for mocking
+    testImplementation "io.mockk:mockk:1.13.5"
+// AndroidX test for ApplicationProvider
+    testImplementation "androidx.test:core:1.5.0"
 }
 
 
