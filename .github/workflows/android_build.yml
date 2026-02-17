@@ -35,17 +35,6 @@ jobs:
           name: SENDA-debug
           path: app/build/outputs/apk/debug/*.apk
 
-      - name: Decode keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > app/keystore.jks
-
-      - name: Build release APK
-        run: ./gradlew assembleRelease
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-
       - name: Build release APK
         if: ${{ matrix.buildType == 'release' && github.ref_name == 'master' }}
         run: ./gradlew assembleRelease
