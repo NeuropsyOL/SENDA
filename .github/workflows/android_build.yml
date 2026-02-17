@@ -27,3 +27,46 @@ jobs:
       - name: Build debug APK
         if: ${{ matrix.buildType == 'debug' && github.ref_name == 'development' }}
         run: ./gradlew assembleDebug
+
+      - name: Upload debug APK
+        if: ${{ matrix.buildType == 'debug' && github.ref_name == 'development' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: SENDA-debug
+          path: app/build/outputs/apk/debug/*.apk
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > app/keystore.jks
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Build release APK
+        if: ${{ matrix.buildType == 'release' && github.ref_name == 'master' }}
+        run: ./gradlew assembleRelease
+
+      - name: Sign app APK
+        if: ${{ matrix.buildType == 'release' && github.ref_name == 'master' }}
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.SIGNING_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        env:
+          # override default build-tools version (33.0.0) -- optional
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+      - name: Upload release APK
+        if: ${{ matrix.buildType == 'release' && github.ref_name == 'master' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: SENDA-release
+          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
