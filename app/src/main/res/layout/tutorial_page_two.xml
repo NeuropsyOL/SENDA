@@ -25,7 +25,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/tutorial_page_2"
-        app:layout_constraintStart_toStartOf="@+id/parent"
-        app:layout_constraintTop_toBottomOf="@+id/close_tutorial_button" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tutorial_image_2" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
