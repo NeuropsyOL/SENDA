@@ -9,14 +9,16 @@ apply plugin: 'kotlin-parcelize'
 //apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdk 34
+    compileSdk 35
     namespace "de.uol.neuropsy.senda"
-    ndkVersion "25.2.9519653"
+    // NDK r28+ compiles 16 KB ELF-aligned by default (Google Play requirement as of Nov 2025).
+    // The CMakeLists.txt also carries explicit linker flags as a belt-and-suspenders measure.
+    ndkVersion "28.0.12433566"
     defaultConfig {
         vectorDrawables.useSupportLibrary = true
         applicationId "de.uol.neuropsy.senda"
         minSdkVersion 30
-        targetSdkVersion 31
+        targetSdkVersion 35
         versionCode 109
         versionName "1.3"
         setProperty("archivesBaseName", "SENDA-$versionName")
@@ -33,6 +35,16 @@ android {
             versionNameSuffix='0.9'
         }
     }
+
+    // AGP < 8.5.1 does not automatically 16 KB-zipalign uncompressed .so files.
+    // useLegacyPackaging compresses the libraries so the ZIP entry alignment is irrelevant,
+    // which is the recommended workaround until AGP is upgraded to 8.5.1+.
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging true
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -69,8 +81,8 @@ dependencies {
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
-    // Mediapipe Library
-    implementation 'com.google.mediapipe:tasks-audio:0.20230731'
+    // Mediapipe Library — 0.10.14+ ships 16 KB-aligned native libs (old 0.20230731 did not)
+    implementation 'com.google.mediapipe:tasks-audio:0.10.14'
     implementation "androidx.activity:activity-ktx:1.9.0"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"

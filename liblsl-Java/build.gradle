@@ -18,7 +18,9 @@ plugins {
 }
 
 dependencies {
-    implementation 'net.java.dev.jna:jna:5.12.0@aar'
+    // JNA 5.14.0+ ships 16 KB ELF-aligned Android native libs (libjnidispatch.so).
+    // 5.12.0 (from 2022) predated the 16 KB requirement.
+    implementation 'net.java.dev.jna:jna:5.18.1@aar'
 }
 
 android {
