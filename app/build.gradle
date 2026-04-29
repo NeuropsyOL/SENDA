@@ -1,12 +1,18 @@
 plugins {
     // This plugin is used to download the yamnet model file
     id 'de.undercouch.download'
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.parcelize'
 }
 
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-parcelize'
-//apply plugin: 'kotlin-android-extensions'
+def appVersionName = "1.3"
+
+// AGP 9 removed setProperty("archivesBaseName") from defaultConfig.
+// The replacement is the project-level base extension.
+base {
+    archivesName = "SENDA-${appVersionName}"
+}
 
 android {
     compileSdk 35
@@ -20,25 +26,26 @@ android {
         minSdkVersion 30
         targetSdkVersion 35
         versionCode 109
-        versionName "1.3"
-        setProperty("archivesBaseName", "SENDA-$versionName")
+        versionName appVersionName
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             versionNameSuffix='0.9'
         }
     }
 
-    // AGP < 8.5.1 does not automatically 16 KB-zipalign uncompressed .so files.
-    // useLegacyPackaging compresses the libraries so the ZIP entry alignment is irrelevant,
-    // which is the recommended workaround until AGP is upgraded to 8.5.1+.
+    // AGP 9.0.1+ automatically 16 KB-zipaligns uncompressed .so files.
+    // useLegacyPackaging is kept so that the Movella and MediaPipe prebuilt libs
+    // (whose ELF segments are still 4 KB-aligned) are compressed into the APK and
+    // extracted at install time — the only way they can load on 16 KB devices until
+    // those SDKs ship 16 KB-aligned binaries.
     packagingOptions {
         jniLibs {
             useLegacyPackaging true

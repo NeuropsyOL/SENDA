@@ -2,6 +2,7 @@ package de.uol.neuropsy.senda.service
 
 import android.app.Application
 import android.content.*
+import android.content.pm.ServiceInfo
 import android.os.IBinder
 import android.util.Log
 import androidx.core.content.ContextCompat
@@ -61,17 +62,21 @@ class LSLServiceClientImpl(
         // Bind only once
         if (service == null) {
             boundDeferred = CompletableDeferred<Unit>().apply {
-                // if the coroutine is cancelled, propagate into the deferred
                 invokeOnCompletion { if (isCancelled) cancel() }
             }
             try {
-                val intent = Intent(application, LSLService::class.java)
+                // Compute the minimum FGS type required for the selected sensors.
+                // connectedDevice is always included (no runtime permission needed).
+                // microphone/location are added only when those sensor types are selected,
+                // avoiding the SecurityException that fires when the matching runtime
+                // permission (RECORD_AUDIO / ACCESS_FINE_LOCATION) hasn't been granted yet.
+                val intent = Intent(application, LSLService::class.java).apply {
+                    putExtra(LSLService.EXTRA_FGS_TYPE, fgsTypeFor(configs))
+                }
                 ContextCompat.startForegroundService(application, intent)
                 application.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-                // suspend until onServiceConnected()
                 boundDeferred!!.await()
             } catch (e: Throwable) {
-                // cleanup on bind failure or cancellation
                 unbind()
                 throw e
             }
@@ -99,5 +104,24 @@ class LSLServiceClientImpl(
     override fun unbind() {
         application.unbindService(connection)
         service = null
+    }
+
+    companion object {
+        /** Computes the minimum foreground service type bitmask for the given sensor configs. */
+        fun fgsTypeFor(configs: List<SensorConfig>): Int {
+            // connectedDevice requires no runtime permission — always safe as the base.
+            var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+            for (cfg in configs) {
+                when (cfg) {
+                    is SensorConfig.Audio,
+                    is SensorConfig.AudioClassification ->
+                        type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                    is SensorConfig.Location ->
+                        type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                    else -> { /* onboard / Movella: connectedDevice already set */ }
+                }
+            }
+            return type
+        }
     }
 }

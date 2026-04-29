@@ -13,6 +13,13 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Required on targetSdk 34+ for each foregroundServiceType used by LSLService.
+         connectedDevice covers Bluetooth/onboard sensors and needs no runtime grant.
+         microphone and location are only included in the FGS type when those sensors
+         are actually selected (see LSLServiceClientImpl.fgsTypeFor). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
@@ -48,7 +55,7 @@
 
         <service
             android:name=".service.LSLService"
-            android:foregroundServiceType="camera|location|microphone" />
+            android:foregroundServiceType="connectedDevice|microphone|location" />
 
         <uses-library android:name="android.test.runner" />
     </application>

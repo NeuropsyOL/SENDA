@@ -6,13 +6,6 @@
 // dependencies { implementation project(':liblsl-java') }
 // in the app's build.gradle
 
-buildscript {
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:7.+'
-    }
-}
-
 plugins {
     id 'com.android.library'
 }
