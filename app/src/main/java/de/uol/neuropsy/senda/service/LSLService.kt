@@ -85,28 +85,33 @@ class LSLService : Service() {
         }
     }
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        CoroutineScope(Dispatchers.Main).launch {
-            try {
-                createNotificationChannel()
-                startForegroundServiceNotification()
-
-            } catch (e: Throwable) {
-                Log.e(TAG, "Failed to start LSLService", e)
+        // startForeground() MUST be called synchronously here, before onStartCommand returns.
+        // The FGS type is passed by the caller so we only request location/microphone types
+        // when those sensors are actually selected and their runtime permissions are granted.
+        val fgsType = intent.getIntExtra(
+            EXTRA_FGS_TYPE,
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+        )
+        try {
+            createNotificationChannel()
+            startForegroundServiceNotification(fgsType)
+        } catch (e: Throwable) {
+            Log.e(TAG, "Failed to start LSLService as foreground service", e)
+            CoroutineScope(Dispatchers.Main).launch {
                 _events.emit(ServiceEvent.Failed(e.message ?: "Unknown error"))
-                stopStreaming()
-                stopSelf()
             }
+            stopSelf()
         }
         return START_NOT_STICKY
     }
 
-    private fun startForegroundServiceNotification() {
+    private fun startForegroundServiceNotification(fgsType: Int) {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher_round)
             .setContentTitle("SENDA is running")
             .setOngoing(true)
             .build()
-        startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+        startForeground(NOTIF_ID, notification, fgsType)
     }
 
     @SuppressLint("MissingPermission")
@@ -269,6 +274,7 @@ class LSLService : Service() {
 
 
     companion object {
+        const val EXTRA_FGS_TYPE = "de.uol.neuropsy.senda.FGS_TYPE"
         private const val TAG = "LSLService"
         private const val CHANNEL_ID = "de.uol.neuropsy.senda.channel"
         private const val NOTIF_ID = 1

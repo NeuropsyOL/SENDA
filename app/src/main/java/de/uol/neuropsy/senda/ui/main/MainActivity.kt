@@ -17,6 +17,9 @@ import android.view.View
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
 import android.view.animation.LinearInterpolator
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckedTextView
@@ -84,8 +87,20 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val toolbar: MaterialToolbar = findViewById(R.id.toolbar)
-        // Set it as the support ActionBar
         setSupportActionBar(toolbar)
+
+        // Android 15+ enforces edge-to-edge: the app draws behind the status bar and
+        // navigation bar. Apply system bar insets so the toolbar isn't hidden behind
+        // the status bar, and the bottom buttons aren't hidden behind the nav bar.
+        val rootView = findViewById<View>(R.id.activity_lsldemo)
+        ViewCompat.setOnApplyWindowInsetsListener(rootView) { _, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            // Push toolbar content below the status bar; toolbar background fills the gap.
+            toolbar.updatePadding(top = bars.top)
+            // Keep bottom content above the navigation bar.
+            rootView.updatePadding(bottom = bars.bottom)
+            insets
+        }
         bindViews()
         bindListeners()
         permissionManager = PermissionManager(this)

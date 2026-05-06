@@ -1,25 +1,32 @@
 plugins {
     // This plugin is used to download the yamnet model file
     id 'de.undercouch.download'
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.parcelize'
 }
 
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-parcelize'
-//apply plugin: 'kotlin-android-extensions'
+def appVersionName = "1.3"
+
+// AGP 9 removed setProperty("archivesBaseName") from defaultConfig.
+// The replacement is the project-level base extension.
+base {
+    archivesName = "SENDA-${appVersionName}"
+}
 
 android {
-    compileSdk 34
+    compileSdk 35
     namespace "de.uol.neuropsy.senda"
-    ndkVersion "25.2.9519653"
+    // NDK r28+ compiles 16 KB ELF-aligned by default (Google Play requirement as of Nov 2025).
+    // The CMakeLists.txt also carries explicit linker flags as a belt-and-suspenders measure.
+    ndkVersion "28.0.12433566"
     defaultConfig {
         vectorDrawables.useSupportLibrary = true
         applicationId "de.uol.neuropsy.senda"
         minSdkVersion 30
-        targetSdkVersion 33
+        targetSdkVersion 35
         versionCode 109
-        versionName "1.3"
-        setProperty("archivesBaseName", "SENDA-$versionName")
+        versionName appVersionName
     }
 
     signingConfigs {
@@ -39,19 +46,26 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            // Only apply signing config if keystore exists
-            def keystorePath = System.getenv("KEYSTORE_PATH") ?: "keystore.jks"
-            if (file(keystorePath).exists()) {
-                signingConfig signingConfigs.release
-            }
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             versionNameSuffix='0.9'
         }
     }
+
+    // AGP 9.0.1+ automatically 16 KB-zipaligns uncompressed .so files.
+    // useLegacyPackaging is kept so that the Movella and MediaPipe prebuilt libs
+    // (whose ELF segments are still 4 KB-aligned) are compressed into the APK and
+    // extracted at install time — the only way they can load on 16 KB devices until
+    // those SDKs ship 16 KB-aligned binaries.
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging true
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -88,8 +102,8 @@ dependencies {
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
-    // Mediapipe Library
-    implementation 'com.google.mediapipe:tasks-audio:0.20230731'
+    // Mediapipe Library — 0.10.14+ ships 16 KB-aligned native libs (old 0.20230731 did not)
+    implementation 'com.google.mediapipe:tasks-audio:0.10.14'
     implementation "androidx.activity:activity-ktx:1.9.0"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"

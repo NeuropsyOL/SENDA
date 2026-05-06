@@ -11,7 +11,8 @@
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="wrap_content"
+        android:minHeight="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         app:layout_scrollFlags="scroll|enterAlways"
         app:titleTextColor="@android:color/white"
@@ -26,10 +27,12 @@
             android:id="@+id/tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Available streams:"
+            android:text="Available streams"
             android:textAlignment="center"
-            android:textColor="#595959"
+            android:textColor="@color/stream_list_text"
             android:textSize="25sp"
+            android:paddingTop="16dp"
+            android:paddingBottom="12dp"
             app:layout_constraintBottom_toTopOf="@+id/swiperefresh"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -54,8 +57,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_marginTop="20dp"
-                    android:background="@drawable/boundary"
-                    android:dividerHeight="1dp" />
+                    android:divider="@null"
+                    android:dividerHeight="0dp" />
 
             </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 

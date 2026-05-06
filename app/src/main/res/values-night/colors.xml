@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Stream list appearance (dark theme) -->
+    <!-- Transparent so the list blends into the app background -->
+    <color name="stream_list_background">#00000000</color>
+    <!-- Subtle border that still shows the list boundary without being harsh -->
+    <color name="stream_list_stroke">#444444</color>
+    <!-- Light grey text for readability on dark backgrounds -->
+    <color name="stream_list_text">#CCCCCC</color>
+</resources>
+
