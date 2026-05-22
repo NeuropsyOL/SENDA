@@ -1,36 +1,78 @@
 plugins {
+    // This plugin is used to download the yamnet model file
     id 'de.undercouch.download'
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.parcelize'
 }
 
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-//apply plugin: 'kotlin-android-extensions'
+def appVersionMajorMinor = "2.0"
+// GITHUB_RUN_NUMBER is set automatically by GitHub Actions on every CI run.
+// Locally it is unset, so we fall back to 0 (which triggers the local defaults below).
+def ciBuildNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "0").toInteger()
+// versionCode must always increase. Offset by 300 so v2.0 CI run #1 (→ 301)
+// is greater than all v1.x builds (which used offset 200).
+def appVersionCode = ciBuildNumber > 0 ? (300 + ciBuildNumber) : 200
+def appVersionName  = ciBuildNumber > 0 ? "${appVersionMajorMinor}.${ciBuildNumber}" : "${appVersionMajorMinor}-local"
+
+// AGP 9 removed setProperty("archivesBaseName") from defaultConfig.
+// The replacement is the project-level base extension.
+base {
+    archivesName = "SENDA-${appVersionName}"
+}
 
 android {
-    compileSdk 33
+    compileSdk 35
     namespace "de.uol.neuropsy.senda"
-    ndkVersion "25.2.9519653"
+    // NDK r28+ compiles 16 KB ELF-aligned by default (Google Play requirement as of Nov 2025).
+    // The CMakeLists.txt also carries explicit linker flags as a belt-and-suspenders measure.
+    ndkVersion "28.0.12433566"
     defaultConfig {
         vectorDrawables.useSupportLibrary = true
         applicationId "de.uol.neuropsy.senda"
         minSdkVersion 30
-        targetSdkVersion 31
-        versionCode 109
-        versionName "1.3"
-        setProperty("archivesBaseName", "SENDA-$versionName")
+        targetSdkVersion 35
+        versionCode appVersionCode
+        versionName appVersionName
     }
+
+    signingConfigs {
+        release {
+            def keystorePath = System.getenv("KEYSTORE_PATH") ?: "keystore.jks"
+            def keystoreFile = file(keystorePath)
+            if (keystoreFile.exists()) {
+                storeFile keystoreFile
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
 
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             versionNameSuffix='0.9'
         }
     }
+
+    // AGP 9.0.1+ automatically 16 KB-zipaligns uncompressed .so files.
+    // useLegacyPackaging is kept so that the Movella and MediaPipe prebuilt libs
+    // (whose ELF segments are still 4 KB-aligned) are compressed into the APK and
+    // extracted at install time — the only way they can load on 16 KB devices until
+    // those SDKs ship 16 KB-aligned binaries.
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging true
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -41,6 +83,11 @@ android {
     }
     kotlinOptions {
         jvmTarget = '1.8'
+    }
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
     }
 }
 
@@ -62,10 +109,33 @@ dependencies {
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
-    // Mediapipe Library
-    implementation 'com.google.mediapipe:tasks-audio:0.20230731'
-
+    // Mediapipe Library — 0.10.14+ ships 16 KB-aligned native libs (old 0.20230731 did not)
+    implementation 'com.google.mediapipe:tasks-audio:0.10.14'
+    implementation "androidx.activity:activity-ktx:1.9.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01"
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+
+
+    // unit‐test deps
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.0"
+    testImplementation "app.cash.turbine:turbine:0.12.1"
+    testImplementation "io.mockk:mockk:1.13.5"
+    testImplementation "androidx.test:core:1.5.0"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'// for ApplicationProvider
+
+    // instrumented‐test deps
+    androidTestImplementation "androidx.test.ext:junit:1.1.5"
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"
+    // coroutine test
+// turbine for Flow testing
+    testImplementation "app.cash.turbine:turbine:0.12.1"
+// MockK for mocking
+    testImplementation "io.mockk:mockk:1.13.5"
+// AndroidX test for ApplicationProvider
+    testImplementation "androidx.test:core:1.5.0"
 }
 
 

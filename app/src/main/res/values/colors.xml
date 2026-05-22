@@ -4,4 +4,8 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
     <color name="black">#474747</color>
+    <!-- Stream list appearance (light theme) -->
+    <color name="stream_list_background">#FFFFFF</color>
+    <color name="stream_list_stroke">#040404</color>
+    <color name="stream_list_text">#595959</color>
 </resources>

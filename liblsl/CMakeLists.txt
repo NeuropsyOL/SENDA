@@ -254,6 +254,16 @@ set_target_properties(lsl PROPERTIES
 	SOVERSION ${LSL_ABI_VERSION}
 )
 
+# 16 KB page-size support: required for Android 15+ / Google Play (since Nov 2025).
+# NDK r28+ enables this automatically; the flags are kept here as an explicit
+# belt-and-suspenders measure so builds with older NDKs stay compliant.
+if(ANDROID)
+	target_link_options(lsl PRIVATE
+		"-Wl,-z,max-page-size=16384"
+		"-Wl,-z,common-page-size=16384"
+	)
+endif()
+
 # enable some additional expensive compiler optimizations
 if(LSL_OPTIMIZATIONS)
 	# enable LTO (https://en.wikipedia.org/wiki/Interprocedural_optimization

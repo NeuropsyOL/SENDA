@@ -2,11 +2,12 @@
 ---
 # SENDA Android Application to stream out sensor data directly from the Phone
 
-SENDA(Sensor Data Streamer) is an android application to stream real time sensor reading using LSL (Lab Streaming Layer). Along with the sensors it streams real time audio as well. This is a fork from the original author's Git [Ali Ayub Khan's SENDA](https://github.com/AliAyub007/SENDA), which contains additional features and support for Samsung phones.
+SENDA (Sensor Data Streamer) is an android application to stream real-time sensor reading using LSL (Lab Streaming Layer). Along with the sensors it streams real-time audio as well. This is a fork from the original author's Git [Ali Ayub Khan's SENDA](https://github.com/AliAyub007/SENDA), which contains additional features and support for Samsung phones.
 
 ## Features 
 The following sensors are included: 
 - Accelerometer
+- Gyroscope
 - Light
 - Proximity
 - Gravity
@@ -15,6 +16,10 @@ The following sensors are included:
 - Step Count
 - Location
 - Movella DOT (via Bluetooth)
+
+Additional capabilities:
+- Dark theme (follows system setting)
+- In-app setup tutorial
 
 ## Data formats
 
@@ -35,10 +40,10 @@ For details about the data format and the orientation of the axes, see the Movel
 
 ## Getting Started
 
-#### Installation 
-Download the [latest release](https://github.com/NeuropsyOL/SENDA/releases/latest) and install the apk on your smartphone or tablet running Android 11 or higher.
+### Installation 
+Download the [latest release](https://github.com/NeuropsyOL/SENDA/releases/latest) and install the APK on your smartphone or tablet running Android 11 or higher.
 
-#### Usage: 
+### Usage 
 Upon launching the app, the user is presented with a main screen displaying a list of available device sensors. Each sensor can be individually selected using check buttons, allowing the user to choose which data to stream. The list of sensors can be refreshed with a swipe-down gesture.
 
 Some sensors—such as audio classification and recording, GPS, and Movella sensors—require special permissions to function properly. When necessary, a permission request dialog is shown when a sensor is selected. GPS requires access to precise location at all times in order to operate correctly. If a permission is repeatedly denied, Android may block further requests. In such cases, the app opens the system settings screen, allowing the user to grant the required permission manually.
@@ -47,25 +52,25 @@ To start streaming, the user must press the **START LSL** button. To stop stream
 
 The LSL streams transmitted by SENDA can be recorded using any LSL-compatible application, such as the [LabRecorder](https://github.com/labstreaminglayer/App-LabRecorder) on PC or [RECORDA](https://github.com/NeuropsyOL/RECORDA) on Android.
 
-On newer versions of Android, it may be necessary to prevent the system from limiting the app's processing time to conserve battery. This can be done by navigating to **Settings → Battery optimization ** and disabling battery optimization for SENDA.
+On newer versions of Android, it may be necessary to prevent the system from limiting the app's processing time to conserve battery. This can be done by navigating to **Settings → Battery optimization** and disabling battery optimization for SENDA.
 
 ## Development
 
-#### Prerequisites:
-- Android Studio Giraffe | 2022.3.1 Patch 2
-- Android API 34 SDK platform
-- Android NDK 25.2.9519653
+### Prerequisites
+- Android Studio Meerkat | 2024.3.1 (or newer)
+- Android API 35 SDK platform
+- Android NDK r28 (28.0.12433566)
 - CMake 3.22.1
 
-Other version may work, the above listed versions are the ones used for development and testing.
+Other versions may work, the above listed versions are the ones used for development and testing.
 
-#### Development:
+### Development
 
 In order to start with development you need to follow these steps: 
 
-- Clone this repository
-- Open project with Android Studio
-- Import the project
+- - Clone the repository
+- - Open the project with Android Studio
+- - Import the project
 
 ## Contributing
 Please feel free to contribute to this project by creating an issue first and then sending a pull request respectively. 
@@ -76,12 +81,12 @@ Please feel free to contribute to this project by creating an issue first and th
 * **Paul Maanen** - [pmaanen](https://github.com/pmaanen)
 
 ## License
-This project is licensed under GNU General Public License License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under GNU General Public License - see the [LICENSE.md](LICENSE.md) file for details
 
 ## Known Issues
-- Sometimes the app complains about mission bluetooth permissions but does the scan for Movella sensors anyway.
-- On a new installation multiple restarts of the app might be necessary until it asks for and notices newly granted permissions
-- Some phones don't respect the foreground service and wakelock. A possible workaround is to set the app to unlimited background power usage in the app settings.
+- Sometimes the app reports missing Bluetooth permissions but does the scan for Movella sensors anyway.
+- After a fresh installation, multiple restarts may be required before the app detects newly granted permissions.
+- Some devices may not properly honor foreground service or wakelock settings. A potential workaround is to allow unlimited background power usage for the app in the system settings.
 
 
 ## Acknowledgments
@@ -90,4 +95,4 @@ This project is licensed under GNU General Public License License - see the [LIC
 [Google Mediapipe](https://developers.google.com/mediapipe), Apache v2.0 license.
 
 ## Cite As:
-
+- Blum S, Hölle D, Bleichner MG, Debener S. Pocketable Labs for Everyone: Synchronized Multi-Sensor Data Streaming and Recording on Smartphones with the Lab Streaming Layer. Sensors. 2021; 21(23):8135. https://doi.org/10.3390/s21238135

@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- "Mark Favorite", must appear as action button if possible. -->
+    <item
+        android:id="@+id/close_tutorial"
+        android:icon="@drawable/close_24"
+        android:title="Show tutorial"
+        app:showAsAction="always"/>
+</menu>
