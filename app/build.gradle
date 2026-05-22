@@ -6,13 +6,13 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.parcelize'
 }
 
-def appVersionMajorMinor = "1.3"
+def appVersionMajorMinor = "2.0"
 // GITHUB_RUN_NUMBER is set automatically by GitHub Actions on every CI run.
 // Locally it is unset, so we fall back to 0 (which triggers the local defaults below).
 def ciBuildNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "0").toInteger()
-// versionCode must always increase. Offset by 200 so even CI run #1 (→ 201)
-// is greater than the previously hardcoded value of 109.
-def appVersionCode = ciBuildNumber > 0 ? (200 + ciBuildNumber) : 109
+// versionCode must always increase. Offset by 300 so v2.0 CI run #1 (→ 301)
+// is greater than all v1.x builds (which used offset 200).
+def appVersionCode = ciBuildNumber > 0 ? (300 + ciBuildNumber) : 200
 def appVersionName  = ciBuildNumber > 0 ? "${appVersionMajorMinor}.${ciBuildNumber}" : "${appVersionMajorMinor}-local"
 
 // AGP 9 removed setProperty("archivesBaseName") from defaultConfig.
