@@ -7,6 +7,7 @@ SENDA (Sensor Data Streamer) is an android application to stream real-time senso
 ## Features 
 The following sensors are included: 
 - Accelerometer
+- Gyroscope
 - Light
 - Proximity
 - Gravity
@@ -15,6 +16,10 @@ The following sensors are included:
 - Step Count
 - Location
 - Movella DOT (via Bluetooth)
+
+Additional capabilities:
+- Dark theme (follows system setting)
+- In-app setup tutorial
 
 ## Data formats
 
@@ -52,9 +57,9 @@ On newer versions of Android, it may be necessary to prevent the system from lim
 ## Development
 
 ### Prerequisites
-- Android Studio Giraffe | 2022.3.1 Patch 2
-- Android API 34 SDK platform
-- Android NDK 25.2.9519653
+- Android Studio Meerkat | 2024.3.1 (or newer)
+- Android API 35 SDK platform
+- Android NDK r28 (28.0.12433566)
 - CMake 3.22.1
 
 Other versions may work, the above listed versions are the ones used for development and testing.

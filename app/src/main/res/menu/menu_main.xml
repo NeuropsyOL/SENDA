@@ -8,11 +8,6 @@
         android:title="Show tutorial"
         app:showAsAction="always"/>
 
-    <!-- Settings -->
-    <item android:id="@+id/action_settings"
-        android:title="Settings"
-        android:icon="@drawable/settings_24"
-        app:showAsAction="always"/>
 
     <!-- About, must always be in the overflow. -->
     <item android:id="@+id/action_about"
