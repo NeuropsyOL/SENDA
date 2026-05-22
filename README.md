@@ -4,8 +4,14 @@
 
 SENDA (Sensor Data Streamer) is an android application to stream real-time sensor reading using LSL (Lab Streaming Layer). Along with the sensors it streams real-time audio as well. This is a fork from the original author's Git [Ali Ayub Khan's SENDA](https://github.com/AliAyub007/SENDA), which contains additional features and support for Samsung phones.
 
-## Features 
-The following sensors are included: 
+## Screenshots
+
+| Idle | Streaming active |
+|------|-----------------|
+| ![SENDA idle screen](docs/screenshots/screenshot_idle.png) | ![SENDA streaming screen](docs/screenshots/screenshot_streaming.png) |
+
+## Features
+The following sensors are included:
 - Accelerometer
 - Gyroscope
 - Light
@@ -18,6 +24,8 @@ The following sensors are included:
 - Movella DOT (via Bluetooth)
 
 Additional capabilities:
+- **Audio classification** powered by [YAMNet](https://www.tensorflow.org/hub/tutorials/yamnet), running fully on-device via [Google MediaPipe](https://developers.google.com/mediapipe) — no internet connection required
+- **Audio recording** stream
 - Dark theme (follows system setting)
 - In-app setup tutorial
 
@@ -40,10 +48,10 @@ For details about the data format and the orientation of the axes, see the Movel
 
 ## Getting Started
 
-### Installation 
+### Installation
 Download the [latest release](https://github.com/NeuropsyOL/SENDA/releases/latest) and install the APK on your smartphone or tablet running Android 11 or higher.
 
-### Usage 
+### Usage
 Upon launching the app, the user is presented with a main screen displaying a list of available device sensors. Each sensor can be individually selected using check buttons, allowing the user to choose which data to stream. The list of sensors can be refreshed with a swipe-down gesture.
 
 Some sensors—such as audio classification and recording, GPS, and Movella sensors—require special permissions to function properly. When necessary, a permission request dialog is shown when a sensor is selected. GPS requires access to precise location at all times in order to operate correctly. If a permission is repeatedly denied, Android may block further requests. In such cases, the app opens the system settings screen, allowing the user to grant the required permission manually.
@@ -66,17 +74,17 @@ Other versions may work, the above listed versions are the ones used for develop
 
 ### Development
 
-In order to start with development you need to follow these steps: 
+In order to start with development you need to follow these steps:
 
 - - Clone the repository
 - - Open the project with Android Studio
 - - Import the project
 
 ## Contributing
-Please feel free to contribute to this project by creating an issue first and then sending a pull request respectively. 
+Please feel free to contribute to this project by creating an issue first and then sending a pull request respectively.
 
 ## Authors
-* **Sarah Blum** - [s4rify](https://github.com/s4rify) 
+* **Sarah Blum** - [s4rify](https://github.com/s4rify)
 * **Ali Ayub Khan** - [AliAyub007](https://github.com/AliAyub007)
 * **Paul Maanen** - [pmaanen](https://github.com/pmaanen)
 
@@ -96,3 +104,5 @@ This project is licensed under GNU General Public License - see the [LICENSE.md]
 
 ## Cite As:
 - Blum S, Hölle D, Bleichner MG, Debener S. Pocketable Labs for Everyone: Synchronized Multi-Sensor Data Streaming and Recording on Smartphones with the Lab Streaming Layer. Sensors. 2021; 21(23):8135. https://doi.org/10.3390/s21238135
+- <!-- TODO: Add newest publication reference here (authors, title, journal, year, DOI) -->
+- *Title TBA upon publication* — accepted. Citation will be updated once the DOI is available.
