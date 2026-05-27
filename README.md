@@ -6,7 +6,7 @@
 
 # SENDA — Sensor Data Streamer for Android
 
-**SENDA** (Sensor Data Streamer) turns any Android smartphone or tablet into a real-time [Lab Streaming Layer (LSL)](https://labstreaminglayer.org) data source. Motion, audio, location, and Bluetooth IMU data stream out of the phone and into any LSL-compatible setup — no proprietary hardware, no special network configuration.
+**SENDA** (Sensor Data Streamer) turns any Android smartphone or tablet into a real-time [Lab Streaming Layer (LSL)](https://labstreaminglayer.org) [[1]](#lsl-ref) data source. Motion, audio, location, and Bluetooth IMU data stream out of the phone and into any LSL-compatible setup — no proprietary hardware, no special network configuration.
 
 > Developed by the [Neuropsychology lab](https://uol.de/neuropsy) of Stefan Debener at the University of Oldenburg.
 
@@ -14,7 +14,7 @@
 
 ## Citation
 
-> **If you use SENDA in your research, you must cite the following publication:**
+> **If you use SENDA in your research, please cite the following publication:**
 >
 > Haupt et al. — *Title TBA upon publication* — accepted. Citation will be updated once a DOI is available.
 
@@ -44,9 +44,11 @@ Smartphones are ubiquitous, affordable, and carry a rich set of onboard sensors.
 
 ## Screenshots
 
-| Idle | Streaming active |
-|------|-----------------|
-| <img src="docs/screenshots/screenshot_idle.png" width="300" alt="SENDA idle screen"> | <img src="docs/screenshots/screenshot_streaming.png" width="300" alt="SENDA streaming screen"> |
+<p>
+  <img src="docs/screenshots/screenshot_idle.png" width="300" alt="SENDA idle screen">
+  &nbsp;&nbsp;&nbsp;
+  <img src="docs/screenshots/screenshot_streaming.png" width="300" alt="SENDA streaming screen">
+</p>
 
 ---
 
@@ -183,3 +185,8 @@ The following papers from the Debener lab illustrate the broader research contex
 
 - **Debener S, Minow F, Emkes R, Gandras K, de Vos M.** How about taking a low-cost, small, and wireless EEG for a walk? *Psychophysiology.* 2012;49(11):1617–21. https://doi.org/10.1111/j.1469-8986.2012.01471.x
 - **Bleichner MG, Debener S.** Concealed, Unobtrusive Ear-Centered EEG Acquisition: cEEGrids for Transparent EEG. *Front Hum Neurosci.* 2017;11:163. https://doi.org/10.3389/fnhum.2017.00163
+
+### Lab Streaming Layer
+<a name="lsl-ref"></a>
+- **Kothe C, Shirazi SY, Stenner T, Medine D, Boulay C, Grivich MI, Artoni F, Mullen T, Delorme A, Makeig S.** The Lab Streaming Layer for Synchronized Multimodal Recording. *Imaging Neurosci (Camb).* 2025;3:IMAG.a.136. doi: [10.1162/IMAG.a.136](https://doi.org/10.1162/IMAG.a.136). PMID: 38405712; PMCID: PMC10888901.
+
