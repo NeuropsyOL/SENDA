@@ -12,6 +12,16 @@
 
 ---
 
+## Citation
+
+> **If you use SENDA in your research, you must cite the following publication:**
+>
+> Haupt et al. — *Title TBA upon publication* — accepted. Citation will be updated once a DOI is available.
+
+SENDA is provided **without any warranty**, and without guarantee of fitness for a particular purpose. Use it at your own risk. See [LICENSE](LICENSE) for the full terms.
+
+---
+
 ## Why SENDA?
 
 ### A drop-in node for any LSL setup
@@ -36,13 +46,14 @@ Smartphones are ubiquitous, affordable, and carry a rich set of onboard sensors.
 
 | Idle | Streaming active |
 |------|-----------------|
-| ![SENDA idle screen](docs/screenshots/screenshot_idle.png) | ![SENDA streaming screen](docs/screenshots/screenshot_streaming.png) |
+| <img src="docs/screenshots/screenshot_idle.png" width="300" alt="SENDA idle screen"> | <img src="docs/screenshots/screenshot_streaming.png" width="300" alt="SENDA streaming screen"> |
 
 ---
 
 ## Features
 
 ### Onboard sensors
+The sensors available depend on the hardware of your device. Modern smartphones typically include all or most of the following, all of which SENDA can stream:
 - Accelerometer
 - Gyroscope
 - Light
@@ -102,20 +113,6 @@ Download the [latest release APK](https://github.com/NeuropsyOL/SENDA/releases/l
 
 ---
 
-## Research & Publications
-
-SENDA was developed to support mobile and ambulatory EEG research in the Debener lab. Papers directly describing or using the app:
-
-- **Blum S, Hölle D, Bleichner MG, Debener S.** Pocketable Labs for Everyone: Synchronized Multi-Sensor Data Streaming and Recording on Smartphones with the Lab Streaming Layer. *Sensors.* 2021; 21(23):8135. https://doi.org/10.3390/s21238135
-- *Title TBA upon publication* — accepted. Citation will be updated once a DOI is available.
-
-### Related work illustrating use cases
-The following papers from the Debener lab illustrate the research context that SENDA was built to support:
-
-- **Debener S, Minow F, Emkes R, Gandras K, de Vos M.** How about taking a low-cost, small, and wireless EEG for a walk? *Psychophysiology.* 2012;49(11):1617–21. https://doi.org/10.1111/j.1469-8986.2012.01471.x
-- **Bleichner MG, Debener S.** Concealed, Unobtrusive Ear-Centered EEG Acquisition: cEEGrids for Transparent EEG. *Front Hum Neurosci.* 2017;11:163. https://doi.org/10.3389/fnhum.2017.00163
-
----
 
 ## Development
 
@@ -167,6 +164,22 @@ GNU General Public License — see [LICENSE](LICENSE) for details.
 - [Google MediaPipe](https://developers.google.com/mediapipe) — Apache 2.0 License
 - Original SENDA by [Ali Ayub Khan](https://github.com/AliAyub007/SENDA)
 
-## Cite As
-- Blum S, Hölle D, Bleichner MG, Debener S. Pocketable Labs for Everyone: Synchronized Multi-Sensor Data Streaming and Recording on Smartphones with the Lab Streaming Layer. *Sensors.* 2021; 21(23):8135. https://doi.org/10.3390/s21238135
-- *Title TBA upon publication* — accepted. Citation will be updated once a DOI is available.
+---
+
+## Research & Publications
+
+### Primary reference
+SENDA was initially designed, developed, and validated in the Debener lab. The following paper describes the initial version, validation experiments, and timing tests:
+
+- **Blum S, Hölle D, Bleichner MG, Debener S.** Pocketable Labs for Everyone: Synchronized Multi-Sensor Data Streaming and Recording on Smartphones with the Lab Streaming Layer. *Sensors.* 2021; 21(23):8135. https://doi.org/10.3390/s21238135
+
+### Current reference (required citation)
+The current version of SENDA is described in:
+
+- Haupt et al. — *Title TBA upon publication* — accepted. Citation will be updated once a DOI is available.
+
+### Related work illustrating use cases
+The following papers from the Debener lab illustrate the broader research context:
+
+- **Debener S, Minow F, Emkes R, Gandras K, de Vos M.** How about taking a low-cost, small, and wireless EEG for a walk? *Psychophysiology.* 2012;49(11):1617–21. https://doi.org/10.1111/j.1469-8986.2012.01471.x
+- **Bleichner MG, Debener S.** Concealed, Unobtrusive Ear-Centered EEG Acquisition: cEEGrids for Transparent EEG. *Front Hum Neurosci.* 2017;11:163. https://doi.org/10.3389/fnhum.2017.00163
